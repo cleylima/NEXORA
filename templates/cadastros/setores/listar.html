@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | Setores
+{% endblock %}
+
+{% block page_title %}
+Setores
+{% endblock %}
+
+{% block page_subtitle %}
+Gerencie os setores das unidades da organização.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="breadcrumb-nexora">
+
+        <span>Cadastros</span>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <strong>Setores</strong>
+
+    </div>
+
+    <a
+        href="{% url 'novo_setor' %}"
+        class="btn-nexora-primary"
+    >
+
+        <i class="bi bi-plus-lg"></i>
+
+        Novo Setor
+
+    </a>
+
+</div>
+
+
+<div class="nexora-card">
+
+    <div class="table-toolbar">
+
+        <div class="table-search">
+
+            <i class="bi bi-search"></i>
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Buscar setor..."
+            >
+
+        </div>
+
+        <div class="table-count">
+
+            {{ setores|length }}
+
+            setor{{ setores|length|pluralize:"es" }}
+
+        </div>
+
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table class="nexora-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Setor</th>
+
+                    <th>Unidade</th>
+
+                    <th>Empresa</th>
+
+                    <th>Código</th>
+
+                    <th>Status</th>
+
+                    <th class="text-end">
+                        Ações
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="tableBody">
+
+                {% for setor in setores %}
+
+                <tr>
+
+                    <td>
+
+                        <div class="entity-cell">
+
+                            <div class="entity-icon">
+
+                                <i class="bi bi-diagram-3"></i>
+
+                            </div>
+
+                            <div>
+
+                                <div class="entity-title">
+
+                                    {{ setor.nome }}
+
+                                </div>
+
+                                {% if setor.descricao %}
+
+                                <div class="entity-subtitle">
+
+                                    {{ setor.descricao|truncatechars:60 }}
+
+                                </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        {{ setor.unidade.nome }}
+                    </td>
+
+
+                    <td>
+                        {{ setor.unidade.empresa }}
+                    </td>
+
+
+                    <td>
+                        {{ setor.codigo|default:"-" }}
+                    </td>
+
+
+                    <td>
+
+                        {% if setor.ativo %}
+
+                        <span class="status-badge status-active">
+
+                            <span></span>
+
+                            Ativo
+
+                        </span>
+
+                        {% else %}
+
+                        <span class="status-badge status-inactive">
+
+                            <span></span>
+
+                            Inativo
+
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td class="text-end">
+
+                        <a
+                            href="{% url 'editar_setor' setor.pk %}"
+                            class="action-button"
+                            title="Editar setor"
+                        >
+
+                            <i class="bi bi-pencil"></i>
+
+                        </a>
+
+                    </td>
+
+                </tr>
+
+
+                {% empty %}
+
+                <tr>
+
+                    <td colspan="6">
+
+                        <div class="empty-state">
+
+                            <div class="empty-state-icon">
+
+                                <i class="bi bi-diagram-3"></i>
+
+                            </div>
+
+                            <h5>
+                                Nenhum setor cadastrado
+                            </h5>
+
+                            <p>
+                                Cadastre o primeiro setor para continuar
+                                estruturando a organização.
+                            </p>
+
+                            <a
+                                href="{% url 'novo_setor' %}"
+                                class="btn-nexora-primary"
+                            >
+
+                                <i class="bi bi-plus-lg"></i>
+
+                                Novo Setor
+
+                            </a>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    const rows =
+        document.querySelectorAll("#tableBody tr");
+
+
+    searchInput.addEventListener(
+        "input",
+        function () {
+
+            const search =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+            rows.forEach(row => {
+
+                const text =
+                    row.innerText.toLowerCase();
+
+                row.style.display =
+                    text.includes(search)
+                        ? ""
+                        : "none";
+
+            });
+
+        }
+    );
+
+</script>
+
+{% endblock %}

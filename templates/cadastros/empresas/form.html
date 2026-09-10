@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | {{ titulo }}
+{% endblock %}
+
+{% block page_title %}
+{{ titulo }}
+{% endblock %}
+
+{% block page_subtitle %}
+Informações cadastrais da empresa.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="breadcrumb-nexora">
+
+        <span>Cadastros</span>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <a href="{% url 'listar_empresas' %}">
+            Empresas
+        </a>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <strong>{{ titulo }}</strong>
+
+    </div>
+
+</div>
+
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <div class="nexora-card form-card">
+
+        <div class="form-section-header">
+
+            <div class="form-section-icon">
+                <i class="bi bi-building"></i>
+            </div>
+
+            <div>
+
+                <h5>
+                    Dados da empresa
+                </h5>
+
+                <p>
+                    Informe os dados principais da organização.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if form.non_field_errors %}
+
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+
+        {% endif %}
+
+
+        <div class="row g-4">
+
+            <div class="col-lg-7">
+
+                <label class="form-label-nexora">
+                    Razão Social
+                </label>
+
+                {{ form.razao_social }}
+
+                {% for error in form.razao_social.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-lg-5">
+
+                <label class="form-label-nexora">
+                    Nome Fantasia
+                </label>
+
+                {{ form.nome_fantasia }}
+
+                {% for error in form.nome_fantasia.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-lg-5">
+
+                <label class="form-label-nexora">
+                    CNPJ
+                </label>
+
+                {{ form.cnpj }}
+
+                {% for error in form.cnpj.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-lg-7 d-flex align-items-end">
+
+                <div class="form-check form-switch nexora-switch">
+
+                    {{ form.ativo }}
+
+                    <label
+                        class="form-check-label"
+                        for="{{ form.ativo.id_for_label }}"
+                    >
+                        Empresa ativa
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'listar_empresas' %}"
+                class="btn-nexora-secondary"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-nexora-primary"
+            >
+                <i class="bi bi-check-lg"></i>
+                Salvar Empresa
+            </button>
+
+        </div>
+
+    </div>
+
+</form>
+
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | Turnos
+{% endblock %}
+
+{% block page_title %}
+Turnos
+{% endblock %}
+
+{% block page_subtitle %}
+Gerencie os turnos utilizados na organização.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="breadcrumb-nexora">
+        <span>Cadastros</span>
+        <i class="bi bi-chevron-right"></i>
+        <strong>Turnos</strong>
+    </div>
+
+    <a
+        href="{% url 'novo_turno' %}"
+        class="btn-nexora-primary"
+    >
+        <i class="bi bi-plus-lg"></i>
+        Novo Turno
+    </a>
+
+</div>
+
+
+<div class="nexora-card">
+
+    <div class="table-toolbar">
+
+        <div class="table-search">
+
+            <i class="bi bi-search"></i>
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Buscar turno..."
+            >
+
+        </div>
+
+        <div class="table-count">
+            {{ turnos|length }}
+            turno{{ turnos|length|pluralize:"s" }}
+        </div>
+
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table class="nexora-table">
+
+            <thead>
+                <tr>
+                    <th>Turno</th>
+                    <th>Horário</th>
+                    <th>Descrição</th>
+                    <th>Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody id="tableBody">
+
+                {% for turno in turnos %}
+
+                <tr>
+
+                    <td>
+
+                        <div class="entity-cell">
+
+                            <div class="entity-icon">
+                                <i class="bi bi-clock"></i>
+                            </div>
+
+                            <div class="entity-title">
+                                {{ turno.nome }}
+                            </div>
+
+                        </div>
+
+                    </td>
+
+                    <td>
+                        {{ turno.hora_inicio|time:"H:i" }}
+                        às
+                        {{ turno.hora_fim|time:"H:i" }}
+                    </td>
+
+                    <td>
+                        {{ turno.descricao|default:"-" }}
+                    </td>
+
+                    <td>
+
+                        {% if turno.ativo %}
+
+                        <span class="status-badge status-active">
+                            <span></span>
+                            Ativo
+                        </span>
+
+                        {% else %}
+
+                        <span class="status-badge status-inactive">
+                            <span></span>
+                            Inativo
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td class="text-end">
+
+                        <a
+                            href="{% url 'editar_turno' turno.pk %}"
+                            class="action-button"
+                            title="Editar turno"
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td colspan="5">
+
+                        <div class="empty-state">
+
+                            <div class="empty-state-icon">
+                                <i class="bi bi-clock"></i>
+                            </div>
+
+                            <h5>
+                                Nenhum turno cadastrado
+                            </h5>
+
+                            <p>
+                                Cadastre o primeiro turno da organização.
+                            </p>
+
+                            <a
+                                href="{% url 'novo_turno' %}"
+                                class="btn-nexora-primary"
+                            >
+                                <i class="bi bi-plus-lg"></i>
+                                Novo Turno
+                            </a>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    const rows =
+        document.querySelectorAll("#tableBody tr");
+
+    searchInput.addEventListener(
+        "input",
+        function () {
+
+            const search =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+            rows.forEach(row => {
+
+                const text =
+                    row.innerText.toLowerCase();
+
+                row.style.display =
+                    text.includes(search)
+                        ? ""
+                        : "none";
+
+            });
+
+        }
+    );
+
+</script>
+
+{% endblock %}

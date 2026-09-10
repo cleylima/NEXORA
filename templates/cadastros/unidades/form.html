@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | {{ titulo }}
+{% endblock %}
+
+{% block page_title %}
+{{ titulo }}
+{% endblock %}
+
+{% block page_subtitle %}
+Informações da unidade.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="breadcrumb-nexora">
+
+        <span>Cadastros</span>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <a href="{% url 'listar_unidades' %}">
+            Unidades
+        </a>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <strong>{{ titulo }}</strong>
+
+    </div>
+
+</div>
+
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <div class="nexora-card form-card">
+
+        <div class="form-section-header">
+
+            <div class="form-section-icon">
+                <i class="bi bi-geo-alt"></i>
+            </div>
+
+            <div>
+
+                <h5>
+                    Dados da unidade
+                </h5>
+
+                <p>
+                    Defina a empresa e as informações da unidade.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="row g-4">
+
+            <div class="col-lg-6">
+
+                <label class="form-label-nexora">
+                    Empresa
+                </label>
+
+                {{ form.empresa }}
+
+            </div>
+
+
+            <div class="col-lg-6">
+
+                <label class="form-label-nexora">
+                    Nome da Unidade
+                </label>
+
+                {{ form.nome }}
+
+            </div>
+
+
+            <div class="col-lg-4">
+
+                <label class="form-label-nexora">
+                    Código
+                </label>
+
+                {{ form.codigo }}
+
+            </div>
+
+
+            <div class="col-lg-5">
+
+                <label class="form-label-nexora">
+                    Cidade
+                </label>
+
+                {{ form.cidade }}
+
+            </div>
+
+
+            <div class="col-lg-3">
+
+                <label class="form-label-nexora">
+                    UF
+                </label>
+
+                {{ form.uf }}
+
+            </div>
+
+
+            <div class="col-12">
+
+                <div class="form-check form-switch nexora-switch">
+
+                    {{ form.ativo }}
+
+                    <label
+                        class="form-check-label"
+                        for="{{ form.ativo.id_for_label }}"
+                    >
+                        Unidade ativa
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'listar_unidades' %}"
+                class="btn-nexora-secondary"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-nexora-primary"
+            >
+                <i class="bi bi-check-lg"></i>
+                Salvar Unidade
+            </button>
+
+        </div>
+
+    </div>
+
+</form>
+
+{% endblock %}

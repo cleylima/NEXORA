@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | {{ titulo }}
+{% endblock %}
+
+{% block page_title %}
+{{ titulo }}
+{% endblock %}
+
+{% block page_subtitle %}
+Informações cadastrais do turno.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="breadcrumb-nexora">
+
+        <span>Cadastros</span>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <a href="{% url 'listar_turnos' %}">
+            Turnos
+        </a>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <strong>{{ titulo }}</strong>
+
+    </div>
+
+</div>
+
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <div class="nexora-card form-card">
+
+        <div class="form-section-header">
+
+            <div class="form-section-icon">
+                <i class="bi bi-clock"></i>
+            </div>
+
+            <div>
+
+                <h5>
+                    Dados do turno
+                </h5>
+
+                <p>
+                    Informe o nome e o horário do turno.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if form.non_field_errors %}
+
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+
+        {% endif %}
+
+
+        <div class="row g-4">
+
+            <div class="col-lg-6">
+
+                <label class="form-label-nexora">
+                    Nome do Turno
+                </label>
+
+                {{ form.nome }}
+
+                {% for error in form.nome.errors %}
+                <div class="field-error">
+                    {{ error }}
+                </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-lg-3">
+
+                <label class="form-label-nexora">
+                    Hora de Início
+                </label>
+
+                {{ form.hora_inicio }}
+
+                {% for error in form.hora_inicio.errors %}
+                <div class="field-error">
+                    {{ error }}
+                </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-lg-3">
+
+                <label class="form-label-nexora">
+                    Hora de Fim
+                </label>
+
+                {{ form.hora_fim }}
+
+                {% for error in form.hora_fim.errors %}
+                <div class="field-error">
+                    {{ error }}
+                </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-12">
+
+                <label class="form-label-nexora">
+                    Descrição
+                </label>
+
+                {{ form.descricao }}
+
+                {% for error in form.descricao.errors %}
+                <div class="field-error">
+                    {{ error }}
+                </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-12">
+
+                <div class="form-check form-switch nexora-switch">
+
+                    {{ form.ativo }}
+
+                    <label
+                        class="form-check-label"
+                        for="{{ form.ativo.id_for_label }}"
+                    >
+                        Turno ativo
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'listar_turnos' %}"
+                class="btn-nexora-secondary"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-nexora-primary"
+            >
+                <i class="bi bi-check-lg"></i>
+                Salvar Turno
+            </button>
+
+        </div>
+
+    </div>
+
+</form>
+
+{% endblock %}

@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | Horas Extras
+{% endblock %}
+
+{% block page_title %}
+Horas Extras
+{% endblock %}
+
+{% block page_subtitle %}
+Gerencie competências e lançamentos de horas extras.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div>
+
+        <div class="page-breadcrumb">
+            Gestão de Pessoas
+            <i class="bi bi-chevron-right"></i>
+            Horas Extras
+        </div>
+
+    </div>
+
+    <a
+        href="{% url 'nova_competencia_he' %}"
+        class="btn-nexora-primary"
+    >
+        <i class="bi bi-plus-lg"></i>
+        Nova Competência
+    </a>
+
+</div>
+
+
+<div class="nexora-card">
+
+    <div class="table-toolbar">
+
+        <div>
+
+            <h5 class="mb-1">
+                Competências
+            </h5>
+
+            <span class="table-count">
+                {{ competencias|length }}
+                competência{{ competencias|length|pluralize }}
+            </span>
+
+        </div>
+
+    </div>
+
+
+    {% if competencias %}
+
+        <div class="table-responsive">
+
+            <table class="table nexora-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Competência</th>
+                        <th>Setor</th>
+                        <th>Unidade</th>
+                        <th>Status</th>
+                        <th>Lançamentos</th>
+                        <th>Criada por</th>
+                        <th></th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for competencia in competencias %}
+
+                        <tr>
+
+                            <td>
+
+                                <div class="entity-cell">
+
+                                    <div class="entity-icon">
+                                        <i class="bi bi-calendar3"></i>
+                                    </div>
+
+                                    <div>
+
+                                        <div class="entity-title">
+                                            {{ competencia.nome_mes }}
+                                            /
+                                            {{ competencia.ano }}
+                                        </div>
+
+                                        <div class="entity-subtitle">
+                                            Competência mensal
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+
+                            <td>
+                                {{ competencia.setor.nome }}
+                            </td>
+
+
+                            <td>
+
+                                {{ competencia.setor.unidade.nome }}
+
+                                <div class="entity-subtitle">
+                                    {{ competencia.setor.unidade.empresa }}
+                                </div>
+
+                            </td>
+
+
+                            <td>
+
+                                {% if competencia.status == "ABERTA" %}
+
+                                    <span class="status-badge active">
+                                        Aberta
+                                    </span>
+
+                                {% elif competencia.status == "FECHADA" %}
+
+                                    <span class="status-badge inactive">
+                                        Fechada
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="status-badge">
+                                       {% if competencia.status == "ABERTA" %}
+
+                                        <span class="workflow-badge workflow-aberta">
+                                            Aberta
+                                        </span>
+
+                                    {% elif competencia.status == "ENVIADA_RH" %}
+
+                                        <span class="workflow-badge workflow-enviada">
+                                            Enviada ao RH
+                                        </span>
+
+                                    {% elif competencia.status == "EM_CONFERENCIA" %}
+
+                                        <span class="workflow-badge workflow-conferencia">
+                                            Em conferência
+                                        </span>
+
+                                    {% elif competencia.status == "DEVOLVIDA" %}
+
+                                        <span class="workflow-badge workflow-devolvida">
+                                            Devolvida
+                                        </span>
+
+                                    {% elif competencia.status == "APROVADA" %}
+
+                                        <span class="workflow-badge workflow-aprovada">
+                                            Aprovada
+                                        </span>
+
+                                    {% elif competencia.status == "FECHADA" %}
+
+                                        <span class="workflow-badge workflow-fechada">
+                                            Fechada
+                                        </span>
+
+                                    {% endif %}
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+                                {{ competencia.total_lancamentos }}
+                            </td>
+
+
+                            <td>
+                                {{ competencia.criado_por }}
+                            </td>
+
+
+                            <td class="text-end">
+
+                                <a
+                                    href="{% url 'detalhar_competencia_he' competencia.pk %}"
+                                    class="action-button"
+                                    title="Abrir competência"
+                                >
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                <i class="bi bi-calendar2-plus"></i>
+            </div>
+
+            <h5>
+                Nenhuma competência criada
+            </h5>
+
+            <p>
+                Crie a primeira competência para iniciar
+                os lançamentos de horas extras.
+            </p>
+
+            <a
+                href="{% url 'nova_competencia_he' %}"
+                class="btn-nexora-primary"
+            >
+                <i class="bi bi-plus-lg"></i>
+                Nova Competência
+            </a>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

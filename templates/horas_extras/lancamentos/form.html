@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | {{ titulo }}
+{% endblock %}
+
+{% block page_title %}
+{{ titulo }}
+{% endblock %}
+
+{% block page_subtitle %}
+{{ competencia.setor.nome }} ·
+{{ competencia.mes|stringformat:"02d" }}/{{ competencia.ano }}
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="page-breadcrumb">
+
+        <a href="{% url 'listar_competencias_he' %}">
+            Horas Extras
+        </a>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <a href="{% url 'detalhar_competencia_he' competencia.pk %}">
+            Competência
+        </a>
+
+        <i class="bi bi-chevron-right"></i>
+
+        Lançar Hora Extra
+
+    </div>
+
+</div>
+
+
+<div class="form-card">
+
+    <form method="post">
+
+        {% csrf_token %}
+
+
+        {% if form.non_field_errors %}
+
+            <div class="alert alert-danger">
+
+                {% for erro in form.non_field_errors %}
+                    {{ erro }}
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+
+        <div class="form-section-header">
+
+            <div class="form-section-icon">
+                <i class="bi bi-clock-history"></i>
+            </div>
+
+            <div>
+
+                <h5>
+                    Lançamento
+                </h5>
+
+                <p>
+                    Informe a data, o funcionário e o período trabalhado.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="row g-4">
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Data
+                </label>
+
+                {{ form.data }}
+
+                {% for erro in form.data.errors %}
+                    <div class="field-error">
+                        {{ erro }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-md-8">
+
+                <label class="form-label">
+                    Funcionário
+                </label>
+
+                {{ form.funcionario }}
+
+                {% for erro in form.funcionario.errors %}
+                    <div class="field-error">
+                        {{ erro }}
+                    </div>
+                {% endfor %}
+
+                <div class="form-text mt-2">
+                    Os funcionários são filtrados conforme a lotação na data informada.
+                </div>
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Hora de início
+                </label>
+
+                {{ form.hora_inicio }}
+
+                {% for erro in form.hora_inicio.errors %}
+                    <div class="field-error">
+                        {{ erro }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Hora de término
+                </label>
+
+                {{ form.hora_fim }}
+
+                {% for erro in form.hora_fim.errors %}
+                    <div class="field-error">
+                        {{ erro }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Intervalo
+                </label>
+
+                <div class="input-group">
+
+                    {{ form.intervalo_minutos }}
+
+                    <span class="input-group-text">
+                        min
+                    </span>
+
+                </div>
+
+                {% for erro in form.intervalo_minutos.errors %}
+                    <div class="field-error">
+                        {{ erro }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-12">
+
+                <label class="form-label">
+                    Observação
+                </label>
+
+                {{ form.observacao }}
+
+                {% for erro in form.observacao.errors %}
+                    <div class="field-error">
+                        {{ erro }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'detalhar_competencia_he' competencia.pk %}"
+                class="btn-nexora-secondary"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-nexora-primary"
+            >
+                <i class="bi bi-check-lg"></i>
+
+                {% if hora_extra %}
+                    Salvar Alterações
+                {% else %}
+                    Salvar Lançamento
+                {% endif %}
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const campoData = document.getElementById("id_data");
+    const campoFuncionario = document.getElementById("id_funcionario");
+
+    const funcionarioSelecionado =
+    campoFuncionario.value;
+
+    const urlFuncionarios =
+        "{% url 'funcionarios_competencia_he' competencia.pk %}";
+
+    if (!campoData || !campoFuncionario) {
+        return;
+    }
+
+
+    function limparFuncionarios(mensagem = "Selecione uma data") {
+
+        campoFuncionario.innerHTML = "";
+
+        const option = document.createElement("option");
+
+        option.value = "";
+        option.textContent = mensagem;
+
+        campoFuncionario.appendChild(option);
+
+        campoFuncionario.disabled = true;
+    }
+
+
+    async function carregarFuncionarios() {
+
+        const data = campoData.value;
+
+        if (!data) {
+
+            limparFuncionarios(
+                "Selecione uma data"
+            );
+
+            return;
+        }
+
+
+        limparFuncionarios(
+            "Carregando funcionários..."
+        );
+
+
+        try {
+
+            const response = await fetch(
+                `${urlFuncionarios}?data=${encodeURIComponent(data)}`,
+                {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                }
+            );
+
+
+            const resultado = await response.json();
+
+
+            campoFuncionario.innerHTML = "";
+
+
+            const optionInicial =
+                document.createElement("option");
+
+            optionInicial.value = "";
+
+
+            if (
+                !response.ok
+                || resultado.erro
+            ) {
+
+                optionInicial.textContent =
+                    resultado.erro
+                    || "Não foi possível carregar os funcionários";
+
+                campoFuncionario.appendChild(
+                    optionInicial
+                );
+
+                campoFuncionario.disabled = true;
+
+                return;
+            }
+
+
+            if (
+                resultado.funcionarios.length === 0
+            ) {
+
+                optionInicial.textContent =
+                    "Nenhum funcionário encontrado";
+
+                campoFuncionario.appendChild(
+                    optionInicial
+                );
+
+                campoFuncionario.disabled = true;
+
+                return;
+            }
+
+
+            optionInicial.textContent =
+                "Selecione o funcionário";
+
+            campoFuncionario.appendChild(
+                optionInicial
+            );
+
+
+            resultado.funcionarios.forEach(
+                funcionario => {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value =
+                        funcionario.id;
+
+                    option.textContent =
+                        funcionario.matricula
+                            ? `${funcionario.nome} · ${funcionario.matricula}`
+                            : funcionario.nome;
+
+                    if (
+                        String(funcionario.id)
+                        === String(funcionarioSelecionado)
+                    ) {
+                        option.selected = true;
+                    }
+
+                    campoFuncionario.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+
+            campoFuncionario.disabled = false;
+
+        }
+
+        catch (erro) {
+
+            console.error(
+                "Erro ao carregar funcionários:",
+                erro
+            );
+
+            limparFuncionarios(
+                "Erro ao carregar funcionários"
+            );
+
+        }
+
+    }
+
+
+    campoData.addEventListener(
+        "change",
+        carregarFuncionarios
+    );
+
+
+    /*
+     * Se a tela já abrir com uma data preenchida,
+     * carrega os funcionários automaticamente.
+     */
+    if (campoData.value) {
+        carregarFuncionarios();
+    }
+
+});
+
+</script>
+
+{% endblock %}

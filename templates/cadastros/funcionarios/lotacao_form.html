@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | Nova Lotação
+{% endblock %}
+
+{% block page_title %}
+Nova Lotação
+{% endblock %}
+
+{% block page_subtitle %}
+{{ funcionario.nome }}
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="breadcrumb-nexora">
+
+        <span>Cadastros</span>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <a href="{% url 'listar_funcionarios' %}">
+            Funcionários
+        </a>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <a href="{% url 'detalhar_funcionario' funcionario.pk %}">
+            {{ funcionario.nome }}
+        </a>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <strong>Nova Lotação</strong>
+
+    </div>
+
+</div>
+
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <div class="nexora-card form-card">
+
+        <div class="form-section-header">
+
+            <div class="form-section-icon">
+                <i class="bi bi-arrow-left-right"></i>
+            </div>
+
+            <div>
+
+                <h5>
+                    Lotação do funcionário
+                </h5>
+
+                <p>
+                    Uma nova lotação encerrará automaticamente a lotação atual.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="row g-4">
+
+            <div class="col-lg-6">
+
+                <label class="form-label-nexora">
+                    Setor
+                </label>
+
+                {{ form.setor }}
+
+                {% for error in form.setor.errors %}
+                <div class="field-error">{{ error }}</div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-lg-6">
+
+                <label class="form-label-nexora">
+                    Função
+                </label>
+
+                {{ form.funcao }}
+
+                {% for error in form.funcao.errors %}
+                <div class="field-error">{{ error }}</div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-lg-6">
+
+                <label class="form-label-nexora">
+                    Turno
+                </label>
+
+                {{ form.turno }}
+
+                {% for error in form.turno.errors %}
+                <div class="field-error">{{ error }}</div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-lg-6">
+
+                <label class="form-label-nexora">
+                    Data de início
+                </label>
+
+                {{ form.inicio }}
+
+                {% for error in form.inicio.errors %}
+                <div class="field-error">{{ error }}</div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-12">
+
+                <label class="form-label-nexora">
+                    Observação
+                </label>
+
+                {{ form.observacao }}
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'detalhar_funcionario' funcionario.pk %}"
+                class="btn-nexora-secondary"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-nexora-primary"
+            >
+                <i class="bi bi-check-lg"></i>
+                Registrar Lotação
+            </button>
+
+        </div>
+
+    </div>
+
+</form>
+
+{% endblock %}

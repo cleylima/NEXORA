@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | {{ titulo }}
+{% endblock %}
+
+{% block page_title %}
+{{ titulo }}
+{% endblock %}
+
+{% block page_subtitle %}
+Dados cadastrais do funcionário.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="breadcrumb-nexora">
+
+        <span>Cadastros</span>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <a href="{% url 'listar_funcionarios' %}">
+            Funcionários
+        </a>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <strong>{{ titulo }}</strong>
+
+    </div>
+
+</div>
+
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <div class="nexora-card form-card">
+
+        <div class="form-section-header">
+
+            <div class="form-section-icon">
+                <i class="bi bi-person"></i>
+            </div>
+
+            <div>
+                <h5>Dados do funcionário</h5>
+                <p>Informe os dados principais do colaborador.</p>
+            </div>
+
+        </div>
+
+
+        <div class="row g-4">
+
+            <div class="col-lg-8">
+
+                <label class="form-label-nexora">
+                    Nome completo
+                </label>
+
+                {{ form.nome }}
+
+                {% for error in form.nome.errors %}
+                <div class="field-error">{{ error }}</div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-lg-4">
+
+                <label class="form-label-nexora">
+                    Matrícula
+                </label>
+
+                {{ form.matricula }}
+
+                {% for error in form.matricula.errors %}
+                <div class="field-error">{{ error }}</div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-lg-6">
+
+                <label class="form-label-nexora">
+                    CPF
+                </label>
+
+                {{ form.cpf }}
+
+                {% for error in form.cpf.errors %}
+                <div class="field-error">{{ error }}</div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-lg-6">
+
+                <label class="form-label-nexora">
+                    Data de admissão
+                </label>
+
+                {{ form.data_admissao }}
+
+                {% for error in form.data_admissao.errors %}
+                <div class="field-error">{{ error }}</div>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="col-12">
+
+                <div class="form-check form-switch nexora-switch">
+
+                    {{ form.ativo }}
+
+                    <label
+                        class="form-check-label"
+                        for="{{ form.ativo.id_for_label }}"
+                    >
+                        Funcionário ativo
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'listar_funcionarios' %}"
+                class="btn-nexora-secondary"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn-nexora-primary"
+            >
+                <i class="bi bi-check-lg"></i>
+                Salvar Funcionário
+            </button>
+
+        </div>
+
+    </div>
+
+</form>
+
+{% endblock %}

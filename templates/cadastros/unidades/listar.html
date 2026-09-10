@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | Unidades
+{% endblock %}
+
+{% block page_title %}
+Unidades
+{% endblock %}
+
+{% block page_subtitle %}
+Gerencie as unidades das empresas cadastradas.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="breadcrumb-nexora">
+        <span>Cadastros</span>
+        <i class="bi bi-chevron-right"></i>
+        <strong>Unidades</strong>
+    </div>
+
+    <a
+        href="{% url 'nova_unidade' %}"
+        class="btn-nexora-primary"
+    >
+        <i class="bi bi-plus-lg"></i>
+        Nova Unidade
+    </a>
+
+</div>
+
+
+<div class="nexora-card">
+
+    <div class="table-toolbar">
+
+        <div class="table-search">
+
+            <i class="bi bi-search"></i>
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Buscar unidade..."
+            >
+
+        </div>
+
+        <div class="table-count">
+
+            {{ unidades|length }}
+            unidade{{ unidades|length|pluralize:"s" }}
+
+        </div>
+
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table class="nexora-table">
+
+            <thead>
+
+                <tr>
+                    <th>Unidade</th>
+                    <th>Empresa</th>
+                    <th>Código</th>
+                    <th>Localização</th>
+                    <th>Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+
+            </thead>
+
+            <tbody id="tableBody">
+
+                {% for unidade in unidades %}
+
+                <tr>
+
+                    <td>
+
+                        <div class="entity-cell">
+
+                            <div class="entity-icon">
+                                <i class="bi bi-geo-alt"></i>
+                            </div>
+
+                            <div class="entity-title">
+                                {{ unidade.nome }}
+                            </div>
+
+                        </div>
+
+                    </td>
+
+                    <td>
+                        {{ unidade.empresa }}
+                    </td>
+
+                    <td>
+                        {{ unidade.codigo|default:"-" }}
+                    </td>
+
+                    <td>
+
+                        {% if unidade.cidade %}
+
+                            {{ unidade.cidade }}
+
+                            {% if unidade.uf %}
+                                / {{ unidade.uf|upper }}
+                            {% endif %}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {% if unidade.ativo %}
+
+                        <span class="status-badge status-active">
+                            <span></span>
+                            Ativa
+                        </span>
+
+                        {% else %}
+
+                        <span class="status-badge status-inactive">
+                            <span></span>
+                            Inativa
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td class="text-end">
+
+                        <a
+                            href="{% url 'editar_unidade' unidade.pk %}"
+                            class="action-button"
+                            title="Editar"
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td colspan="6">
+
+                        <div class="empty-state">
+
+                            <div class="empty-state-icon">
+                                <i class="bi bi-geo-alt"></i>
+                            </div>
+
+                            <h5>
+                                Nenhuma unidade cadastrada
+                            </h5>
+
+                            <p>
+                                Cadastre a primeira unidade para continuar a estrutura organizacional.
+                            </p>
+
+                            <a
+                                href="{% url 'nova_unidade' %}"
+                                class="btn-nexora-primary"
+                            >
+                                <i class="bi bi-plus-lg"></i>
+                                Nova Unidade
+                            </a>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    const rows =
+        document.querySelectorAll(
+            "#tableBody tr"
+        );
+
+    searchInput.addEventListener(
+        "input",
+        function () {
+
+            const search =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+            rows.forEach(
+                row => {
+
+                    const text =
+                        row.innerText
+                            .toLowerCase();
+
+                    row.style.display =
+                        text.includes(search)
+                            ? ""
+                            : "none";
+
+                }
+            );
+
+        }
+    );
+
+</script>
+
+{% endblock %}

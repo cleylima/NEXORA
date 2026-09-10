@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | {{ funcionario.nome }}
+{% endblock %}
+
+{% block page_title %}
+{{ funcionario.nome }}
+{% endblock %}
+
+{% block page_subtitle %}
+Ficha cadastral e histórico de lotação.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="breadcrumb-nexora">
+
+        <span>Cadastros</span>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <a href="{% url 'listar_funcionarios' %}">
+            Funcionários
+        </a>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <strong>{{ funcionario.nome }}</strong>
+
+    </div>
+
+
+    <div class="d-flex gap-2">
+
+        <a
+            href="{% url 'editar_funcionario' funcionario.pk %}"
+            class="btn-nexora-secondary"
+        >
+            <i class="bi bi-pencil"></i>
+            Editar
+        </a>
+
+        <a
+            href="{% url 'nova_lotacao_funcionario' funcionario.pk %}"
+            class="btn-nexora-primary"
+        >
+            <i class="bi bi-arrow-left-right"></i>
+            Nova Lotação
+        </a>
+
+    </div>
+
+</div>
+
+
+<div class="row g-4">
+
+    <div class="col-lg-4">
+
+        <div class="nexora-card employee-profile-card">
+
+            <div class="employee-profile-avatar">
+                {{ funcionario.nome|slice:":1"|upper }}
+            </div>
+
+            <h4>{{ funcionario.nome }}</h4>
+
+            <div class="employee-profile-matricula">
+                Matrícula {{ funcionario.matricula }}
+            </div>
+
+
+            <div class="profile-info-list">
+
+                <div class="profile-info-item">
+                    <span>CPF</span>
+                    <strong>
+                        {{ funcionario.cpf|default:"Não informado" }}
+                    </strong>
+                </div>
+
+                <div class="profile-info-item">
+                    <span>Admissão</span>
+
+                    <strong>
+                        {% if funcionario.data_admissao %}
+                            {{ funcionario.data_admissao|date:"d/m/Y" }}
+                        {% else %}
+                            Não informada
+                        {% endif %}
+                    </strong>
+                </div>
+
+                <div class="profile-info-item">
+                    <span>Status</span>
+
+                    {% if funcionario.ativo %}
+
+                    <strong class="text-success">
+                        Ativo
+                    </strong>
+
+                    {% else %}
+
+                    <strong class="text-secondary">
+                        Inativo
+                    </strong>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-8">
+
+        <div class="nexora-card">
+
+            <div class="form-section-header">
+
+                <div class="form-section-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+
+                <div>
+                    <h5>Histórico de Lotação</h5>
+                    <p>
+                        Movimentações organizacionais do funcionário.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="table-responsive">
+
+                <table class="nexora-table">
+
+                    <thead>
+                        <tr>
+                            <th>Período</th>
+                            <th>Unidade</th>
+                            <th>Setor</th>
+                            <th>Função</th>
+                            <th>Turno</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for lotacao in lotacoes %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ lotacao.inicio|date:"d/m/Y" }}
+
+                                <div class="entity-subtitle">
+
+                                    {% if lotacao.fim %}
+
+                                        até
+                                        {{ lotacao.fim|date:"d/m/Y" }}
+
+                                    {% else %}
+
+                                        Atual
+
+                                    {% endif %}
+
+                                </div>
+
+                            </td>
+
+                            <td>
+                                {{ lotacao.setor.unidade.nome }}
+                            </td>
+
+                            <td>
+                                {{ lotacao.setor.nome }}
+                            </td>
+
+                            <td>
+                                {{ lotacao.funcao.nome }}
+                            </td>
+
+                            <td>
+                                {% if lotacao.turno %}
+                                    {{ lotacao.turno.nome }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="5">
+
+                                <div class="empty-state">
+
+                                    <div class="empty-state-icon">
+                                        <i class="bi bi-diagram-3"></i>
+                                    </div>
+
+                                    <h5>
+                                        Funcionário sem lotação
+                                    </h5>
+
+                                    <p>
+                                        Registre a lotação inicial deste funcionário.
+                                    </p>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

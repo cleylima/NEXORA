@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | Funções
+{% endblock %}
+
+{% block page_title %}
+Funções
+{% endblock %}
+
+{% block page_subtitle %}
+Gerencie as funções utilizadas na organização.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="breadcrumb-nexora">
+        <span>Cadastros</span>
+        <i class="bi bi-chevron-right"></i>
+        <strong>Funções</strong>
+    </div>
+
+    <a
+        href="{% url 'nova_funcao' %}"
+        class="btn-nexora-primary"
+    >
+        <i class="bi bi-plus-lg"></i>
+        Nova Função
+    </a>
+
+</div>
+
+
+<div class="nexora-card">
+
+    <div class="table-toolbar">
+
+        <div class="table-search">
+
+            <i class="bi bi-search"></i>
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Buscar função..."
+            >
+
+        </div>
+
+        <div class="table-count">
+            {{ funcoes|length }}
+            função{{ funcoes|length|pluralize:"ões" }}
+        </div>
+
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table class="nexora-table">
+
+            <thead>
+                <tr>
+                    <th>Função</th>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody id="tableBody">
+
+                {% for funcao in funcoes %}
+
+                <tr>
+
+                    <td>
+
+                        <div class="entity-cell">
+
+                            <div class="entity-icon">
+                                <i class="bi bi-briefcase"></i>
+                            </div>
+
+                            <div class="entity-title">
+                                {{ funcao.nome }}
+                            </div>
+
+                        </div>
+
+                    </td>
+
+                    <td>
+                        {{ funcao.codigo|default:"-" }}
+                    </td>
+
+                    <td>
+                        {% if funcao.descricao %}
+                            {{ funcao.descricao|truncatechars:70 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td>
+
+                        {% if funcao.ativo %}
+
+                        <span class="status-badge status-active">
+                            <span></span>
+                            Ativa
+                        </span>
+
+                        {% else %}
+
+                        <span class="status-badge status-inactive">
+                            <span></span>
+                            Inativa
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td class="text-end">
+
+                        <a
+                            href="{% url 'editar_funcao' funcao.pk %}"
+                            class="action-button"
+                            title="Editar função"
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td colspan="5">
+
+                        <div class="empty-state">
+
+                            <div class="empty-state-icon">
+                                <i class="bi bi-briefcase"></i>
+                            </div>
+
+                            <h5>
+                                Nenhuma função cadastrada
+                            </h5>
+
+                            <p>
+                                Cadastre a primeira função da organização.
+                            </p>
+
+                            <a
+                                href="{% url 'nova_funcao' %}"
+                                class="btn-nexora-primary"
+                            >
+                                <i class="bi bi-plus-lg"></i>
+                                Nova Função
+                            </a>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    const rows =
+        document.querySelectorAll("#tableBody tr");
+
+    searchInput.addEventListener(
+        "input",
+        function () {
+
+            const search =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+            rows.forEach(row => {
+
+                const text =
+                    row.innerText.toLowerCase();
+
+                row.style.display =
+                    text.includes(search)
+                        ? ""
+                        : "none";
+
+            });
+
+        }
+    );
+
+</script>
+
+{% endblock %}

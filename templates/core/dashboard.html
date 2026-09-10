@@ -1,0 +1,414 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | Início
+{% endblock %}
+
+{% block page_title %}
+Visão Geral
+{% endblock %}
+
+{% block page_subtitle %}
+Acompanhe os principais indicadores da plataforma.
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-section">
+
+    <div class="row g-4">
+
+        <!-- FUNCIONÁRIOS -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <a
+                href="{% url 'listar_funcionarios' %}"
+                class="metric-card-link"
+            >
+
+                <div class="nexora-card metric-card">
+
+                    <div class="metric-card-header">
+
+                        <div class="metric-icon metric-blue">
+                            <i class="bi bi-people"></i>
+                        </div>
+
+                        <span class="metric-label">
+                            Funcionários
+                        </span>
+
+                    </div>
+
+                    <div class="metric-value">
+                        {{ total_funcionarios }}
+                    </div>
+
+                    <div class="metric-footer">
+                        Funcionários ativos
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+
+        <!-- SETORES -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <a
+                href="{% url 'listar_setores' %}"
+                class="metric-card-link"
+            >
+
+                <div class="nexora-card metric-card">
+
+                    <div class="metric-card-header">
+
+                        <div class="metric-icon metric-purple">
+                            <i class="bi bi-diagram-3"></i>
+                        </div>
+
+                        <span class="metric-label">
+                            Setores
+                        </span>
+
+                    </div>
+
+                    <div class="metric-value">
+                        {{ total_setores }}
+                    </div>
+
+                    <div class="metric-footer">
+                        Setores ativos
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+
+        <!-- UNIDADES -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <a
+                href="{% url 'listar_unidades' %}"
+                class="metric-card-link"
+            >
+
+                <div class="nexora-card metric-card">
+
+                    <div class="metric-card-header">
+
+                        <div class="metric-icon metric-green">
+                            <i class="bi bi-geo-alt"></i>
+                        </div>
+
+                        <span class="metric-label">
+                            Unidades
+                        </span>
+
+                    </div>
+
+                    <div class="metric-value">
+                        {{ total_unidades }}
+                    </div>
+
+                    <div class="metric-footer">
+                        Unidades ativas
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+
+        <!-- PENDÊNCIAS -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="nexora-card metric-card">
+
+                <div class="metric-card-header">
+
+                    <div class="metric-icon metric-orange">
+                        <i class="bi bi-exclamation-circle"></i>
+                    </div>
+
+                    <span class="metric-label">
+                        Pendências
+                    </span>
+
+                </div>
+
+                <div class="metric-value">
+                    {{ funcionarios_sem_lotacao }}
+                </div>
+
+                <div class="metric-footer">
+                    Funcionários sem lotação
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="row g-4 mt-1">
+
+    <!-- ESTRUTURA ORGANIZACIONAL -->
+
+    <div class="col-xl-8">
+
+        <div class="nexora-card">
+
+            <div class="dashboard-card-header">
+
+                <div>
+
+                    <h5>
+                        Estrutura Organizacional
+                    </h5>
+
+                    <p>
+                        Visão geral dos cadastros da plataforma.
+                    </p>
+
+                </div>
+
+                <i class="bi bi-building dashboard-header-icon"></i>
+
+            </div>
+
+
+            <div class="organization-summary">
+
+                <div class="organization-item">
+
+                    <div class="organization-icon">
+                        <i class="bi bi-building"></i>
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            {{ total_empresas }}
+                        </strong>
+
+                        <span>
+                            Empresas
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="organization-arrow">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+
+
+                <div class="organization-item">
+
+                    <div class="organization-icon">
+                        <i class="bi bi-geo-alt"></i>
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            {{ total_unidades }}
+                        </strong>
+
+                        <span>
+                            Unidades
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="organization-arrow">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+
+
+                <div class="organization-item">
+
+                    <div class="organization-icon">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            {{ total_setores }}
+                        </strong>
+
+                        <span>
+                            Setores
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="organization-arrow">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+
+
+                <div class="organization-item">
+
+                    <div class="organization-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            {{ total_funcionarios }}
+                        </strong>
+
+                        <span>
+                            Funcionários
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ACESSO RÁPIDO -->
+
+    <div class="col-xl-4">
+
+        <div class="nexora-card">
+
+            <div class="dashboard-card-header">
+
+                <div>
+
+                    <h5>
+                        Acesso Rápido
+                    </h5>
+
+                    <p>
+                        Ações mais utilizadas.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="quick-actions">
+
+                <a
+                    href="{% url 'novo_funcionario' %}"
+                    class="quick-action-item"
+                >
+
+                    <div class="quick-action-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Novo Funcionário
+                        </strong>
+
+                        <span>
+                            Adicionar colaborador
+                        </span>
+
+                    </div>
+
+                    <i class="bi bi-chevron-right"></i>
+
+                </a>
+
+
+                <a
+                    href="{% url 'listar_funcionarios' %}"
+                    class="quick-action-item"
+                >
+
+                    <div class="quick-action-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Funcionários
+                        </strong>
+
+                        <span>
+                            Consultar cadastros
+                        </span>
+
+                    </div>
+
+                    <i class="bi bi-chevron-right"></i>
+
+                </a>
+
+
+                <a
+                    href="{% url 'listar_setores' %}"
+                    class="quick-action-item"
+                >
+
+                    <div class="quick-action-icon">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Setores
+                        </strong>
+
+                        <span>
+                            Estrutura organizacional
+                        </span>
+
+                    </div>
+
+                    <i class="bi bi-chevron-right"></i>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

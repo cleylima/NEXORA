@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | Empresas
+{% endblock %}
+
+{% block page_title %}
+Empresas
+{% endblock %}
+
+{% block page_subtitle %}
+Gerencie as empresas cadastradas na plataforma.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div>
+
+        <div class="breadcrumb-nexora">
+            <span>Cadastros</span>
+            <i class="bi bi-chevron-right"></i>
+            <strong>Empresas</strong>
+        </div>
+
+    </div>
+
+    <a
+        href="{% url 'nova_empresa' %}"
+        class="btn-nexora-primary"
+    >
+        <i class="bi bi-plus-lg"></i>
+        Nova Empresa
+    </a>
+
+</div>
+
+
+<div class="nexora-card">
+
+    <div class="table-toolbar">
+
+        <div class="table-search">
+
+            <i class="bi bi-search"></i>
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Buscar empresa..."
+            >
+
+        </div>
+
+        <div class="table-count">
+
+            {{ empresas|length }}
+            empresa{{ empresas|length|pluralize:"s" }}
+
+        </div>
+
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table class="nexora-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Empresa</th>
+
+                    <th>CNPJ</th>
+
+                    <th>Status</th>
+
+                    <th class="text-end">
+                        Ações
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="tableBody">
+
+                {% for empresa in empresas %}
+
+                <tr>
+
+                    <td>
+
+                        <div class="entity-cell">
+
+                            <div class="entity-icon">
+                                <i class="bi bi-building"></i>
+                            </div>
+
+                            <div>
+
+                                <div class="entity-title">
+                                    {{ empresa.nome_fantasia|default:empresa.razao_social }}
+                                </div>
+
+                                {% if empresa.nome_fantasia %}
+
+                                <div class="entity-subtitle">
+                                    {{ empresa.razao_social }}
+                                </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+                    <td>
+                        {{ empresa.cnpj }}
+                    </td>
+
+                    <td>
+
+                        {% if empresa.ativo %}
+
+                        <span class="status-badge status-active">
+                            <span></span>
+                            Ativa
+                        </span>
+
+                        {% else %}
+
+                        <span class="status-badge status-inactive">
+                            <span></span>
+                            Inativa
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td class="text-end">
+
+                        <a
+                            href="{% url 'editar_empresa' empresa.pk %}"
+                            class="action-button"
+                            title="Editar"
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td colspan="4">
+
+                        <div class="empty-state">
+
+                            <div class="empty-state-icon">
+                                <i class="bi bi-building"></i>
+                            </div>
+
+                            <h5>
+                                Nenhuma empresa cadastrada
+                            </h5>
+
+                            <p>
+                                Cadastre a primeira empresa para começar a estruturar o NEXORA.
+                            </p>
+
+                            <a
+                                href="{% url 'nova_empresa' %}"
+                                class="btn-nexora-primary"
+                            >
+                                <i class="bi bi-plus-lg"></i>
+                                Nova Empresa
+                            </a>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    const rows =
+        document.querySelectorAll(
+            "#tableBody tr"
+        );
+
+    searchInput.addEventListener(
+        "input",
+        function () {
+
+            const search =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+            rows.forEach(
+                row => {
+
+                    const text =
+                        row.innerText
+                            .toLowerCase();
+
+                    row.style.display =
+                        text.includes(search)
+                            ? ""
+                            : "none";
+
+                }
+            );
+
+        }
+    );
+
+</script>
+
+{% endblock %}

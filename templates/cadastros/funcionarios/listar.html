@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}
+NEXORA | Funcionários
+{% endblock %}
+
+{% block page_title %}
+Funcionários
+{% endblock %}
+
+{% block page_subtitle %}
+Gerencie os colaboradores cadastrados na plataforma.
+{% endblock %}
+
+{% block content %}
+
+<div class="page-toolbar">
+
+    <div class="breadcrumb-nexora">
+        <span>Cadastros</span>
+        <i class="bi bi-chevron-right"></i>
+        <strong>Funcionários</strong>
+    </div>
+
+    <a
+        href="{% url 'novo_funcionario' %}"
+        class="btn-nexora-primary"
+    >
+        <i class="bi bi-person-plus"></i>
+        Novo Funcionário
+    </a>
+
+</div>
+
+
+<div class="nexora-card">
+
+    <div class="table-toolbar">
+
+        <div class="table-search">
+
+            <i class="bi bi-search"></i>
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Buscar funcionário..."
+            >
+
+        </div>
+
+        <div class="table-count">
+            {{ funcionarios|length }}
+            funcionário{{ funcionarios|length|pluralize:"s" }}
+        </div>
+
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table class="nexora-table">
+
+            <thead>
+                <tr>
+                    <th>Funcionário</th>
+                    <th>Matrícula</th>
+                    <th>Setor</th>
+                    <th>Função</th>
+                    <th>Turno</th>
+                    <th>Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody id="tableBody">
+
+                {% for funcionario in funcionarios %}
+
+                    {% with lotacao=funcionario.lotacao_atual %}
+
+                    <tr>
+
+                        <td>
+
+                            <div class="entity-cell">
+
+                                <div class="employee-avatar">
+                                    {{ funcionario.nome|slice:":1"|upper }}
+                                </div>
+
+                                <div>
+
+                                    <div class="entity-title">
+                                        {{ funcionario.nome }}
+                                    </div>
+
+                                    {% if funcionario.cpf %}
+
+                                    <div class="entity-subtitle">
+                                        {{ funcionario.cpf }}
+                                    </div>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+                            {{ funcionario.matricula }}
+                        </td>
+
+                        <td>
+                            {% if lotacao %}
+                                {{ lotacao.setor.nome }}
+                            {% else %}
+                                <span class="text-muted">Sem lotação</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if lotacao %}
+                                {{ lotacao.funcao.nome }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if lotacao and lotacao.turno %}
+                                {{ lotacao.turno.nome }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+
+                            {% if funcionario.ativo %}
+
+                            <span class="status-badge status-active">
+                                <span></span>
+                                Ativo
+                            </span>
+
+                            {% else %}
+
+                            <span class="status-badge status-inactive">
+                                <span></span>
+                                Inativo
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            <a
+                                href="{% url 'detalhar_funcionario' funcionario.pk %}"
+                                class="action-button"
+                                title="Visualizar"
+                            >
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <a
+                                href="{% url 'editar_funcionario' funcionario.pk %}"
+                                class="action-button"
+                                title="Editar"
+                            >
+                                <i class="bi bi-pencil"></i>
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    {% endwith %}
+
+                {% empty %}
+
+                <tr>
+
+                    <td colspan="7">
+
+                        <div class="empty-state">
+
+                            <div class="empty-state-icon">
+                                <i class="bi bi-people"></i>
+                            </div>
+
+                            <h5>
+                                Nenhum funcionário cadastrado
+                            </h5>
+
+                            <p>
+                                Cadastre o primeiro funcionário da organização.
+                            </p>
+
+                            <a
+                                href="{% url 'novo_funcionario' %}"
+                                class="btn-nexora-primary"
+                            >
+                                <i class="bi bi-person-plus"></i>
+                                Novo Funcionário
+                            </a>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const searchInput =
+    document.getElementById("searchInput");
+
+const rows =
+    document.querySelectorAll("#tableBody tr");
+
+searchInput.addEventListener(
+    "input",
+    function () {
+
+        const search =
+            this.value
+                .toLowerCase()
+                .trim();
+
+        rows.forEach(row => {
+
+            const text =
+                row.innerText.toLowerCase();
+
+            row.style.display =
+                text.includes(search)
+                    ? ""
+                    : "none";
+
+        });
+
+    }
+);
+
+</script>
+
+{% endblock %}
