@@ -37,109 +37,191 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
     </div>
 
 
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+
+
+        <!-- =================================================
+             EDITAR / EXCLUIR COMPETÊNCIA
+             Somente aberta e sem lançamentos
+        ================================================== -->
+
+        {% if competencia.status == "ABERTA" and not lancamentos %}
+
+            {% if perms.horas_extras.lancar_horas_extras or request.user.is_superuser %}
+
+                <a
+                    href="{% url 'editar_competencia_he' competencia.pk %}"
+                    class="btn-nexora-secondary"
+                >
+                    <i class="bi bi-pencil"></i>
+                    Editar
+                </a>
+
+                <button
+                    type="button"
+                    class="btn btn-outline-danger"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalExcluirCompetencia"
+                >
+                    <i class="bi bi-trash"></i>
+                    Excluir
+                </button>
+
+            {% endif %}
+
+        {% endif %}
+
+
+
+        <!-- =================================================
+             AÇÕES DO LÍDER
+        ================================================== -->
 
         {% if competencia.status == "ABERTA" or competencia.status == "DEVOLVIDA" %}
 
-            <a
-                href="{% url 'nova_hora_extra' competencia.pk %}"
-                class="btn-nexora-primary"
-            >
-                <i class="bi bi-plus-lg"></i>
-                Lançar Hora Extra
-            </a>
+            {% if perms.horas_extras.lancar_horas_extras or request.user.is_superuser %}
+
+                <a
+                    href="{% url 'nova_hora_extra' competencia.pk %}"
+                    class="btn-nexora-primary"
+                >
+                    <i class="bi bi-plus-lg"></i>
+                    Lançar Hora Extra
+                </a>
+
+            {% endif %}
 
 
             {% if lancamentos %}
 
+                {% if perms.horas_extras.enviar_horas_extras_rh or request.user.is_superuser %}
+
+                    <button
+                        type="button"
+                        class="btn-nexora-success"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalEnviarRH"
+                    >
+
+                        {% if competencia.status == "DEVOLVIDA" %}
+
+                            <i class="bi bi-arrow-repeat"></i>
+                            Reenviar ao RH
+
+                        {% else %}
+
+                            <i class="bi bi-send"></i>
+                            Enviar ao RH
+
+                        {% endif %}
+
+                    </button>
+
+                {% endif %}
+
+            {% endif %}
+
+
+
+        <!-- =================================================
+             AÇÕES DO RH
+        ================================================== -->
+
+        {% elif competencia.status == "ENVIADA_RH" %}
+
+            {% if perms.horas_extras.conferir_horas_extras or request.user.is_superuser %}
+
+                <form
+                    method="post"
+                    action="{% url 'iniciar_conferencia_competencia' competencia.pk %}"
+                    class="m-0"
+                >
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="btn-nexora-primary"
+                    >
+                        <i class="bi bi-search"></i>
+                        Iniciar Conferência
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+
+
+        {% elif competencia.status == "EM_CONFERENCIA" %}
+
+            {% if perms.horas_extras.devolver_horas_extras or request.user.is_superuser %}
+
                 <button
                     type="button"
-                    class="btn-nexora-success"
+                    class="btn-nexora-secondary"
                     data-bs-toggle="modal"
-                    data-bs-target="#modalEnviarRH"
+                    data-bs-target="#modalDevolverCompetencia"
                 >
-
-                    {% if competencia.status == "DEVOLVIDA" %}
-
-                        <i class="bi bi-arrow-repeat"></i>
-                        Reenviar ao RH
-
-                    {% else %}
-
-                        <i class="bi bi-send"></i>
-                        Enviar ao RH
-
-                    {% endif %}
-
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    Devolver para Correção
                 </button>
 
             {% endif %}
 
 
-        {% elif competencia.status == "ENVIADA_RH" %}
+            {% if perms.horas_extras.aprovar_horas_extras or request.user.is_superuser %}
 
-            <form
-                method="post"
-                action="{% url 'iniciar_conferencia_competencia' competencia.pk %}"
-                class="m-0"
-            >
-
-                {% csrf_token %}
-
-                <button
-                    type="submit"
-                    class="btn-nexora-primary"
+                <form
+                    method="post"
+                    action="{% url 'aprovar_competencia' competencia.pk %}"
+                    class="m-0"
                 >
-                    <i class="bi bi-search"></i>
-                    Iniciar Conferência
-                </button>
+                    {% csrf_token %}
 
-            </form>
+                    <button
+                        type="submit"
+                        class="btn-nexora-success"
+                    >
+                        <i class="bi bi-check-lg"></i>
+                        Aprovar Competência
+                    </button>
 
+                </form>
 
-        {% elif competencia.status == "EM_CONFERENCIA" %}
+            {% endif %}
 
-            <button
-                type="button"
-                class="btn-nexora-secondary"
-                data-bs-toggle="modal"
-                data-bs-target="#modalDevolverCompetencia"
-            >
-                <i class="bi bi-arrow-counterclockwise"></i>
-                Devolver para Correção
-            </button>
-
-
-            <form
-                method="post"
-                action="{% url 'aprovar_competencia' competencia.pk %}"
-                class="m-0"
-            >
-
-                {% csrf_token %}
-
-                <button
-                    type="submit"
-                    class="btn-nexora-success"
-                >
-                    <i class="bi bi-check-lg"></i>
-                    Aprovar Competência
-                </button>
-
-            </form>
 
 
         {% elif competencia.status == "APROVADA" %}
 
-            <button
-                type="button"
-                class="btn-nexora-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#modalFecharCompetencia"
-            >
-                <i class="bi bi-lock"></i>
-                Fechar Competência
-            </button>
+            {% if perms.horas_extras.devolver_horas_extras or request.user.is_superuser %}
+
+                <button
+                    type="button"
+                    class="btn-nexora-secondary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalDevolverCompetencia"
+                >
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    Devolver para Correção
+                </button>
+
+            {% endif %}
+
+            {% if perms.horas_extras.fechar_horas_extras or request.user.is_superuser %}
+
+                <button
+                    type="button"
+                    class="btn-nexora-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalFecharCompetencia"
+                >
+                    <i class="bi bi-lock"></i>
+                    Fechar Competência
+                </button>
+
+            {% endif %}
+
 
 
         {% elif competencia.status == "FECHADA" %}
@@ -238,6 +320,7 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
                     </strong>
 
                 </div>
+
 
 
                 <!-- STATUS -->
@@ -363,9 +446,7 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
             <div class="form-section-header">
 
                 <div class="form-section-icon">
-
                     <i class="bi bi-clock-history"></i>
-
                 </div>
 
                 <div>
@@ -416,9 +497,13 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
                                 {% if competencia.status == "ABERTA" or competencia.status == "DEVOLVIDA" %}
 
-                                    <th class="text-end">
-                                        Ações
-                                    </th>
+                                    {% if perms.horas_extras.lancar_horas_extras or request.user.is_superuser %}
+
+                                        <th class="text-end">
+                                            Ações
+                                        </th>
+
+                                    {% endif %}
 
                                 {% endif %}
 
@@ -443,9 +528,7 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
 
                                     <td>
-
                                         {{ hora.data|date:"d/m/Y" }}
-
                                     </td>
 
 
@@ -461,9 +544,7 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
 
                                     <td>
-
                                         {{ hora.intervalo_minutos }} min
-
                                     </td>
 
 
@@ -476,48 +557,51 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
                                     </td>
 
 
+
                                     {% if competencia.status == "ABERTA" or competencia.status == "DEVOLVIDA" %}
 
-                                        <td class="text-end">
+                                        {% if perms.horas_extras.lancar_horas_extras or request.user.is_superuser %}
 
-                                            <div class="d-inline-flex gap-2">
+                                            <td class="text-end">
 
-
-                                                <!-- EDITAR -->
-
-                                                <a
-                                                    href="{% url 'editar_hora_extra' hora.pk %}"
-                                                    class="action-button"
-                                                    title="Editar lançamento"
-                                                >
-
-                                                    <i class="bi bi-pencil"></i>
-
-                                                </a>
+                                                <div class="d-inline-flex gap-2">
 
 
-                                                <!-- EXCLUIR -->
+                                                    <!-- EDITAR -->
 
-                                                <button
-                                                    type="button"
-                                                    class="action-button action-button-danger"
-                                                    title="Excluir lançamento"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#modalExcluirHora{{ hora.pk }}"
-                                                >
-
-                                                    <i class="bi bi-trash"></i>
-
-                                                </button>
+                                                    <a
+                                                        href="{% url 'editar_hora_extra' hora.pk %}"
+                                                        class="action-button"
+                                                        title="Editar lançamento"
+                                                    >
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
 
 
-                                            </div>
 
-                                        </td>
+                                                    <!-- EXCLUIR -->
+
+                                                    <button
+                                                        type="button"
+                                                        class="action-button action-button-danger"
+                                                        title="Excluir lançamento"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#modalExcluirHora{{ hora.pk }}"
+                                                    >
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+
+
+                                                </div>
+
+                                            </td>
+
+                                        {% endif %}
 
                                     {% endif %}
 
                                 </tr>
+
 
 
                                 <!-- =========================================
@@ -526,126 +610,119 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
                                 {% if competencia.status == "ABERTA" or competencia.status == "DEVOLVIDA" %}
 
-                                    <div
-                                        class="modal fade"
-                                        id="modalExcluirHora{{ hora.pk }}"
-                                        tabindex="-1"
-                                        aria-hidden="true"
-                                    >
+                                    {% if perms.horas_extras.lancar_horas_extras or request.user.is_superuser %}
 
-                                        <div class="modal-dialog modal-dialog-centered">
+                                        <div
+                                            class="modal fade"
+                                            id="modalExcluirHora{{ hora.pk }}"
+                                            tabindex="-1"
+                                            aria-hidden="true"
+                                        >
 
-                                            <div class="modal-content nexora-modal">
+                                            <div class="modal-dialog modal-dialog-centered">
 
-
-                                                <div class="modal-header border-0">
-
-                                                    <div>
-
-                                                        <h5 class="modal-title">
-                                                            Excluir lançamento
-                                                        </h5>
-
-                                                        <p class="mb-0 text-muted">
-                                                            Esta ação não poderá ser desfeita.
-                                                        </p>
-
-                                                    </div>
+                                                <div class="modal-content nexora-modal">
 
 
-                                                    <button
-                                                        type="button"
-                                                        class="btn-close"
-                                                        data-bs-dismiss="modal"
-                                                        aria-label="Fechar"
-                                                    ></button>
-
-                                                </div>
-
-
-
-                                                <div class="modal-body">
-
-                                                    <div class="delete-confirmation">
-
-
-                                                        <div class="delete-confirmation-icon">
-
-                                                            <i class="bi bi-trash3"></i>
-
-                                                        </div>
-
+                                                    <div class="modal-header border-0">
 
                                                         <div>
 
-                                                            <strong>
+                                                            <h5 class="modal-title">
+                                                                Excluir lançamento
+                                                            </h5>
 
-                                                                {{ hora.funcionario.nome }}
-
-                                                            </strong>
-
-
-                                                            <p class="mb-0">
-
-                                                                {{ hora.data|date:"d/m/Y" }}
-
-                                                                ·
-
-                                                                {{ hora.hora_inicio|time:"H:i" }}
-
-                                                                às
-
-                                                                {{ hora.hora_fim|time:"H:i" }}
-
-                                                                ·
-
-                                                                {{ hora.duracao_horas }}
-
+                                                            <p class="mb-0 text-muted">
+                                                                Esta ação não poderá ser desfeita.
                                                             </p>
 
                                                         </div>
 
-                                                    </div>
-
-                                                </div>
-
-
-
-                                                <div class="modal-footer border-0">
-
-
-                                                    <button
-                                                        type="button"
-                                                        class="btn-nexora-secondary"
-                                                        data-bs-dismiss="modal"
-                                                    >
-
-                                                        Cancelar
-
-                                                    </button>
-
-
-                                                    <form
-                                                        method="post"
-                                                        action="{% url 'excluir_hora_extra' hora.pk %}"
-                                                    >
-
-                                                        {% csrf_token %}
-
 
                                                         <button
-                                                            type="submit"
-                                                            class="btn btn-danger"
+                                                            type="button"
+                                                            class="btn-close"
+                                                            data-bs-dismiss="modal"
+                                                            aria-label="Fechar"
+                                                        ></button>
+
+                                                    </div>
+
+
+
+                                                    <div class="modal-body">
+
+                                                        <div class="delete-confirmation">
+
+
+                                                            <div class="delete-confirmation-icon">
+
+                                                                <i class="bi bi-trash3"></i>
+
+                                                            </div>
+
+
+                                                            <div>
+
+                                                                <strong>
+                                                                    {{ hora.funcionario.nome }}
+                                                                </strong>
+
+                                                                <p class="mb-0">
+
+                                                                    {{ hora.data|date:"d/m/Y" }}
+
+                                                                    ·
+
+                                                                    {{ hora.hora_inicio|time:"H:i" }}
+
+                                                                    às
+
+                                                                    {{ hora.hora_fim|time:"H:i" }}
+
+                                                                    ·
+
+                                                                    {{ hora.duracao_horas }}
+
+                                                                </p>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+
+
+
+                                                    <div class="modal-footer border-0">
+
+                                                        <button
+                                                            type="button"
+                                                            class="btn-nexora-secondary"
+                                                            data-bs-dismiss="modal"
                                                         >
-
-                                                            <i class="bi bi-trash"></i>
-
-                                                            Excluir
-
+                                                            Cancelar
                                                         </button>
 
-                                                    </form>
 
+                                                        <form
+                                                            method="post"
+                                                            action="{% url 'excluir_hora_extra' hora.pk %}"
+                                                        >
+
+                                                            {% csrf_token %}
+
+                                                            <button
+                                                                type="submit"
+                                                                class="btn btn-danger"
+                                                            >
+                                                                <i class="bi bi-trash"></i>
+                                                                Excluir
+                                                            </button>
+
+                                                        </form>
+
+                                                    </div>
 
                                                 </div>
 
@@ -653,7 +730,7 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
                                         </div>
 
-                                    </div>
+                                    {% endif %}
 
                                 {% endif %}
 
@@ -671,22 +748,15 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
                 <div class="empty-state">
 
                     <div class="empty-state-icon">
-
                         <i class="bi bi-clock"></i>
-
                     </div>
-
 
                     <h5>
                         Nenhuma hora extra lançada
                     </h5>
 
-
                     <p>
-
-                        Os lançamentos desta competência
-                        aparecerão aqui.
-
+                        Os lançamentos desta competência aparecerão aqui.
                     </p>
 
                 </div>
@@ -712,9 +782,7 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
         <div class="form-section-header">
 
             <div class="form-section-icon">
-
                 <i class="bi bi-clock-history"></i>
-
             </div>
 
             <div>
@@ -793,23 +861,15 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
                         <div class="workflow-timeline-top">
 
-
                             <strong>
-
                                 {{ movimento.get_acao_display }}
-
                             </strong>
 
-
                             <span>
-
                                 {{ movimento.criado_em|date:"d/m/Y H:i" }}
-
                             </span>
 
-
                         </div>
-
 
 
                         <p>
@@ -817,28 +877,22 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
                             por
 
                             <strong>
-
                                 {{ movimento.usuario.nome|default:movimento.usuario.username }}
-
                             </strong>
 
                         </p>
 
 
-
                         {% if movimento.observacao %}
 
                             <div class="workflow-timeline-note">
-
                                 {{ movimento.observacao }}
-
                             </div>
 
                         {% endif %}
 
 
                     </div>
-
 
                 </div>
 
@@ -860,188 +914,150 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
     {% if competencia.status == "ABERTA" or competencia.status == "DEVOLVIDA" %}
 
-        <div
-            class="modal fade"
-            id="modalEnviarRH"
-            tabindex="-1"
-            aria-hidden="true"
-        >
+        {% if perms.horas_extras.enviar_horas_extras_rh or request.user.is_superuser %}
 
-            <div class="modal-dialog modal-dialog-centered">
+            <div
+                class="modal fade"
+                id="modalEnviarRH"
+                tabindex="-1"
+                aria-hidden="true"
+            >
 
+                <div class="modal-dialog modal-dialog-centered">
 
-                <div class="modal-content nexora-modal">
-
-
-                    <div class="modal-header border-0">
+                    <div class="modal-content nexora-modal">
 
 
-                        <div>
-
-
-                            <h5 class="modal-title">
-
-                                {% if competencia.status == "DEVOLVIDA" %}
-
-                                    Reenviar competência ao RH
-
-                                {% else %}
-
-                                    Enviar competência ao RH
-
-                                {% endif %}
-
-                            </h5>
-
-
-                            <p class="mb-0 text-muted">
-
-                                {% if competencia.status == "DEVOLVIDA" %}
-
-                                    Confirme o reenvio após realizar as correções.
-
-                                {% else %}
-
-                                    Confirme o envio para conferência.
-
-                                {% endif %}
-
-                            </p>
-
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Fechar"
-                        ></button>
-
-
-                    </div>
-
-
-
-                    <div class="modal-body">
-
-
-                        <div class="workflow-confirmation">
-
-
-                            <div class="workflow-confirmation-icon">
-
-
-                                {% if competencia.status == "DEVOLVIDA" %}
-
-                                    <i class="bi bi-arrow-repeat"></i>
-
-                                {% else %}
-
-                                    <i class="bi bi-send"></i>
-
-                                {% endif %}
-
-
-                            </div>
-
+                        <div class="modal-header border-0">
 
                             <div>
 
+                                <h5 class="modal-title">
 
-                                <strong>
+                                    {% if competencia.status == "DEVOLVIDA" %}
+                                        Reenviar competência ao RH
+                                    {% else %}
+                                        Enviar competência ao RH
+                                    {% endif %}
 
-                                    {{ competencia.nome_mes }}/{{ competencia.ano }}
-
-                                </strong>
+                                </h5>
 
 
-                                <p class="mb-0">
+                                <p class="mb-0 text-muted">
 
-                                    {{ competencia.setor.nome }}
+                                    {% if competencia.status == "DEVOLVIDA" %}
+                                        Confirme o reenvio após realizar as correções.
+                                    {% else %}
+                                        Confirme o envio para conferência.
+                                    {% endif %}
 
                                 </p>
-
 
                             </div>
 
 
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Fechar"
+                            ></button>
+
                         </div>
 
 
-                        <p class="workflow-warning">
 
-                            Após o envio, os lançamentos não poderão
-                            mais ser editados ou excluídos enquanto
-                            a competência estiver em análise pelo RH.
+                        <div class="modal-body">
 
-                        </p>
+                            <div class="workflow-confirmation">
 
 
-                    </div>
+                                <div class="workflow-confirmation-icon">
+
+                                    {% if competencia.status == "DEVOLVIDA" %}
+                                        <i class="bi bi-arrow-repeat"></i>
+                                    {% else %}
+                                        <i class="bi bi-send"></i>
+                                    {% endif %}
+
+                                </div>
+
+
+                                <div>
+
+                                    <strong>
+                                        {{ competencia.nome_mes }}/{{ competencia.ano }}
+                                    </strong>
+
+                                    <p class="mb-0">
+                                        {{ competencia.setor.nome }}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            <p class="workflow-warning">
+
+                                Após o envio, os lançamentos não poderão
+                                mais ser editados ou excluídos enquanto
+                                a competência estiver em análise pelo RH.
+
+                            </p>
+
+                        </div>
 
 
 
-                    <div class="modal-footer border-0">
-
-
-                        <button
-                            type="button"
-                            class="btn-nexora-secondary"
-                            data-bs-dismiss="modal"
-                        >
-
-                            Cancelar
-
-                        </button>
-
-
-                        <form
-                            method="post"
-                            action="{% url 'enviar_competencia_rh' competencia.pk %}"
-                        >
-
-                            {% csrf_token %}
-
+                        <div class="modal-footer border-0">
 
                             <button
-                                type="submit"
-                                class="btn-nexora-success"
+                                type="button"
+                                class="btn-nexora-secondary"
+                                data-bs-dismiss="modal"
                             >
-
-
-                                {% if competencia.status == "DEVOLVIDA" %}
-
-                                    <i class="bi bi-arrow-repeat"></i>
-
-                                    Confirmar Reenvio
-
-                                {% else %}
-
-                                    <i class="bi bi-send"></i>
-
-                                    Confirmar Envio
-
-                                {% endif %}
-
-
+                                Cancelar
                             </button>
 
 
-                        </form>
+                            <form
+                                method="post"
+                                action="{% url 'enviar_competencia_rh' competencia.pk %}"
+                            >
 
+                                {% csrf_token %}
+
+                                <button
+                                    type="submit"
+                                    class="btn-nexora-success"
+                                >
+
+                                    {% if competencia.status == "DEVOLVIDA" %}
+
+                                        <i class="bi bi-arrow-repeat"></i>
+                                        Confirmar Reenvio
+
+                                    {% else %}
+
+                                        <i class="bi bi-send"></i>
+                                        Confirmar Envio
+
+                                    {% endif %}
+
+                                </button>
+
+                            </form>
+
+                        </div>
 
                     </div>
 
-
                 </div>
-
 
             </div>
 
-
-        </div>
+        {% endif %}
 
     {% endif %}
 
@@ -1053,138 +1069,118 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
      MODAL DEVOLVER PARA CORREÇÃO
 ========================================================= -->
 
-{% if competencia.status == "EM_CONFERENCIA" %}
+{% if competencia.status == "EM_CONFERENCIA" or competencia.status == "APROVADA"  %}
 
-    <div
-        class="modal fade"
-        id="modalDevolverCompetencia"
-        tabindex="-1"
-        aria-hidden="true"
-    >
+    {% if perms.horas_extras.devolver_horas_extras or request.user.is_superuser %}
 
-        <div class="modal-dialog modal-dialog-centered">
+        <div
+            class="modal fade"
+            id="modalDevolverCompetencia"
+            tabindex="-1"
+            aria-hidden="true"
+        >
 
+            <div class="modal-dialog modal-dialog-centered">
 
-            <div class="modal-content nexora-modal">
-
-
-                <form
-                    method="post"
-                    action="{% url 'devolver_competencia' competencia.pk %}"
-                >
-
-                    {% csrf_token %}
+                <div class="modal-content nexora-modal">
 
 
-                    <div class="modal-header border-0">
+                    <form
+                        method="post"
+                        action="{% url 'devolver_competencia' competencia.pk %}"
+                    >
+
+                        {% csrf_token %}
 
 
-                        <div>
+                        <div class="modal-header border-0">
+
+                            <div>
+
+                                <h5 class="modal-title">
+                                    Devolver para correção
+                                </h5>
+
+                                <p class="mb-0 text-muted">
+                                    Informe ao responsável o que precisa ser corrigido.
+                                </p>
+
+                            </div>
 
 
-                            <h5 class="modal-title">
-
-                                Devolver para correção
-
-                            </h5>
-
-
-                            <p class="mb-0 text-muted">
-
-                                Informe ao responsável o que precisa ser corrigido.
-
-                            </p>
-
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Fechar"
-                        ></button>
-
-
-                    </div>
-
-
-
-                    <div class="modal-body">
-
-
-                        <label
-                            for="id_motivo"
-                            class="form-label"
-                        >
-
-                            Motivo da devolução
-
-                        </label>
-
-
-                        <textarea
-                            name="motivo"
-                            id="id_motivo"
-                            class="form-control"
-                            rows="4"
-                            required
-                            minlength="5"
-                            placeholder="Ex.: Verificar o horário lançado para José da Silva em 19/08."
-                        ></textarea>
-
-
-                        <div class="form-text mt-2">
-
-                            Esta observação ficará registrada no histórico da competência.
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Fechar"
+                            ></button>
 
                         </div>
 
 
-                    </div>
+
+                        <div class="modal-body">
+
+                            <label
+                                for="id_motivo"
+                                class="form-label"
+                            >
+                                Motivo da devolução
+                            </label>
+
+
+                            <textarea
+                                name="motivo"
+                                id="id_motivo"
+                                class="form-control"
+                                rows="4"
+                                required
+                                minlength="5"
+                                placeholder="Ex.: Verificar o horário lançado para José da Silva em 19/08."
+                            ></textarea>
+
+
+                            <div class="form-text mt-2">
+
+                                Esta observação ficará registrada no
+                                histórico da competência.
+
+                            </div>
+
+                        </div>
 
 
 
-                    <div class="modal-footer border-0">
+                        <div class="modal-footer border-0">
+
+                            <button
+                                type="button"
+                                class="btn-nexora-secondary"
+                                data-bs-dismiss="modal"
+                            >
+                                Cancelar
+                            </button>
 
 
-                        <button
-                            type="button"
-                            class="btn-nexora-secondary"
-                            data-bs-dismiss="modal"
-                        >
+                            <button
+                                type="submit"
+                                class="btn btn-warning"
+                            >
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                                Devolver Competência
+                            </button>
 
-                            Cancelar
+                        </div>
 
-                        </button>
+                    </form>
 
-
-                        <button
-                            type="submit"
-                            class="btn btn-warning"
-                        >
-
-                            <i class="bi bi-arrow-counterclockwise"></i>
-
-                            Devolver Competência
-
-                        </button>
-
-
-                    </div>
-
-
-                </form>
-
+                </div>
 
             </div>
 
-
         </div>
 
-
-    </div>
+    {% endif %}
 
 {% endif %}
 
@@ -1196,149 +1192,246 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
 {% if competencia.status == "APROVADA" %}
 
-    <div
-        class="modal fade"
-        id="modalFecharCompetencia"
-        tabindex="-1"
-        aria-hidden="true"
-    >
+    {% if perms.horas_extras.fechar_horas_extras or request.user.is_superuser %}
 
-        <div class="modal-dialog modal-dialog-centered">
+        <div
+            class="modal fade"
+            id="modalFecharCompetencia"
+            tabindex="-1"
+            aria-hidden="true"
+        >
 
+            <div class="modal-dialog modal-dialog-centered">
 
-            <div class="modal-content nexora-modal">
-
-
-                <div class="modal-header border-0">
+                <div class="modal-content nexora-modal">
 
 
-                    <div>
-
-
-                        <h5 class="modal-title">
-
-                            Fechar competência
-
-                        </h5>
-
-
-                        <p class="mb-0 text-muted">
-
-                            Finalize o processamento deste período.
-
-                        </p>
-
-
-                    </div>
-
-
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Fechar"
-                    ></button>
-
-
-                </div>
-
-
-
-                <div class="modal-body">
-
-
-                    <div class="workflow-confirmation">
-
-
-                        <div class="workflow-confirmation-icon">
-
-                            <i class="bi bi-lock"></i>
-
-                        </div>
-
+                    <div class="modal-header border-0">
 
                         <div>
 
+                            <h5 class="modal-title">
+                                Fechar competência
+                            </h5>
 
-                            <strong>
-
-                                {{ competencia.nome_mes }}/{{ competencia.ano }}
-
-                            </strong>
-
-
-                            <p class="mb-0">
-
-                                {{ competencia.setor.nome }}
-
+                            <p class="mb-0 text-muted">
+                                Finalize o processamento deste período.
                             </p>
-
 
                         </div>
 
 
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Fechar"
+                        ></button>
+
                     </div>
 
 
-                    <p class="workflow-warning">
 
-                        A competência será marcada como fechada
-                        e passará a fazer parte do histórico.
+                    <div class="modal-body">
 
-                    </p>
+                        <div class="workflow-confirmation">
 
 
-                </div>
+                            <div class="workflow-confirmation-icon">
+                                <i class="bi bi-lock"></i>
+                            </div>
+
+
+                            <div>
+
+                                <strong>
+                                    {{ competencia.nome_mes }}/{{ competencia.ano }}
+                                </strong>
+
+                                <p class="mb-0">
+                                    {{ competencia.setor.nome }}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <p class="workflow-warning">
+
+                            A competência será marcada como fechada
+                            e passará a fazer parte do histórico.
+
+                        </p>
+
+                    </div>
 
 
 
-                <div class="modal-footer border-0">
-
-
-                    <button
-                        type="button"
-                        class="btn-nexora-secondary"
-                        data-bs-dismiss="modal"
-                    >
-
-                        Cancelar
-
-                    </button>
-
-
-                    <form
-                        method="post"
-                        action="{% url 'fechar_competencia' competencia.pk %}"
-                    >
-
-                        {% csrf_token %}
-
+                    <div class="modal-footer border-0">
 
                         <button
-                            type="submit"
-                            class="btn-nexora-primary"
+                            type="button"
+                            class="btn-nexora-secondary"
+                            data-bs-dismiss="modal"
                         >
-
-                            <i class="bi bi-lock"></i>
-
-                            Fechar Competência
-
+                            Cancelar
                         </button>
 
 
-                    </form>
+                        <form
+                            method="post"
+                            action="{% url 'fechar_competencia' competencia.pk %}"
+                        >
 
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="btn-nexora-primary"
+                            >
+                                <i class="bi bi-lock"></i>
+                                Fechar Competência
+                            </button>
+
+                        </form>
+
+                    </div>
 
                 </div>
 
-
             </div>
-
 
         </div>
 
+    {% endif %}
 
-    </div>
+{% endif %}
+
+
+
+<!-- =========================================================
+     MODAL EXCLUIR COMPETÊNCIA
+========================================================= -->
+
+{% if competencia.status == "ABERTA" and not lancamentos %}
+
+    {% if perms.horas_extras.lancar_horas_extras or request.user.is_superuser %}
+
+        <div
+            class="modal fade"
+            id="modalExcluirCompetencia"
+            tabindex="-1"
+            aria-hidden="true"
+        >
+
+            <div class="modal-dialog modal-dialog-centered">
+
+                <div class="modal-content nexora-modal">
+
+
+                    <div class="modal-header border-0">
+
+                        <div>
+
+                            <h5 class="modal-title">
+                                Excluir competência
+                            </h5>
+
+                            <p class="mb-0 text-muted">
+                                Esta ação não poderá ser desfeita.
+                            </p>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Fechar"
+                        ></button>
+
+                    </div>
+
+
+
+                    <div class="modal-body">
+
+                        <div class="delete-confirmation">
+
+
+                            <div class="delete-confirmation-icon">
+                                <i class="bi bi-trash3"></i>
+                            </div>
+
+
+                            <div>
+
+                                <strong>
+                                    {{ competencia.nome_mes }}/{{ competencia.ano }}
+                                </strong>
+
+                                <p class="mb-0">
+                                    {{ competencia.setor.nome }}
+                                    ·
+                                    {{ competencia.setor.unidade.nome }}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <p class="workflow-warning mt-3">
+
+                            A competência e seu histórico serão excluídos.
+                            Esta operação só é permitida enquanto não
+                            existirem lançamentos de horas extras.
+
+                        </p>
+
+                    </div>
+
+
+
+                    <div class="modal-footer border-0">
+
+                        <button
+                            type="button"
+                            class="btn-nexora-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Cancelar
+                        </button>
+
+
+                        <form
+                            method="post"
+                            action="{% url 'excluir_competencia_he' competencia.pk %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="btn btn-danger"
+                            >
+                                <i class="bi bi-trash"></i>
+                                Excluir Competência
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% endif %}
 
 {% endif %}
 

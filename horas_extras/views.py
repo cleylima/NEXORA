@@ -1,8 +1,8 @@
-from datetime import date
+from datetime import date, datetime
 from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q
-from cadastros.models import Funcionario
+from cadastros.models import LotacaoFuncionario
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
@@ -13,7 +13,7 @@ from .models import (
     HoraExtra,
     MovimentacaoCompetencia
 )
-from horas_extras.permissoes import setores_acessiveis_por
+from .permissoes import setores_acessiveis_por
 
 
 
@@ -88,10 +88,26 @@ def listar_competencias(request):
 @login_required
 def nova_competencia(request):
 
+    if (
+        not request.user.has_perm(
+            "horas_extras.lancar_horas_extras"
+        )
+        and not request.user.is_superuser
+    ):
+        messages.error(
+            request,
+            "Você não possui permissão para criar competências de horas extras."
+        )
+
+        return redirect(
+            "listar_competencias_he"
+        )
+
     if request.method == "POST":
 
         form = CompetenciaHoraExtraForm(
-            request.POST
+            request.POST,
+            usuario=request.user,
         )
 
         if form.is_valid():
@@ -103,7 +119,7 @@ def nova_competencia(request):
             competencia.criado_por = request.user
 
             competencia.save()
-            
+
             MovimentacaoCompetencia.objects.create(
                 competencia=competencia,
                 usuario=request.user,
@@ -125,6 +141,7 @@ def nova_competencia(request):
         hoje = date.today()
 
         form = CompetenciaHoraExtraForm(
+            usuario=request.user,
             initial={
                 "mes": hoje.month,
                 "ano": hoje.year,
@@ -140,12 +157,189 @@ def nova_competencia(request):
         }
     )
 
+@login_required
+def editar_competencia(request, pk):
+
+    if (
+        not request.user.has_perm(
+            "horas_extras.lancar_horas_extras"
+        )
+        and not request.user.is_superuser
+    ):
+        messages.error(
+            request,
+            "Você não possui permissão para editar competências."
+        )
+        return redirect(
+            "listar_competencias_he"
+        )
+
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
+    )
+
+    competencia = get_object_or_404(
+        CompetenciaHoraExtra.objects.filter(
+            setor__in=setores_acessiveis
+        ),
+        pk=pk
+    )
+
+    if competencia.status != CompetenciaHoraExtra.Status.ABERTA:
+        messages.error(
+            request,
+            "Somente competências abertas podem ser editadas."
+        )
+        return redirect(
+            "detalhar_competencia_he",
+            pk=competencia.pk
+        )
+
+    if competencia.lancamentos.exists():
+        messages.error(
+            request,
+            "Não é possível editar uma competência que já possui lançamentos."
+        )
+        return redirect(
+            "detalhar_competencia_he",
+            pk=competencia.pk
+        )
+
+    if request.method == "POST":
+
+        form = CompetenciaHoraExtraForm(
+            request.POST,
+            instance=competencia,
+            usuario=request.user,
+        )
+
+        if form.is_valid():
+
+            form.save()
+
+            messages.success(
+                request,
+                "Competência atualizada com sucesso."
+            )
+
+            return redirect(
+                "detalhar_competencia_he",
+                pk=competencia.pk
+            )
+
+    else:
+
+        form = CompetenciaHoraExtraForm(
+            instance=competencia,
+            usuario=request.user,
+        )
+
+    return render(
+        request,
+        "horas_extras/competencias/form.html",
+        {
+            "form": form,
+            "competencia": competencia,
+            "titulo": "Editar Competência",
+            "modo_edicao": True,
+        }
+    )
+
+
+@login_required
+def excluir_competencia(request, pk):
+
+    if (
+        not request.user.has_perm(
+            "horas_extras.lancar_horas_extras"
+        )
+        and not request.user.is_superuser
+    ):
+        messages.error(
+            request,
+            "Você não possui permissão para excluir competências."
+        )
+        return redirect(
+            "listar_competencias_he"
+        )
+
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
+    )
+
+    competencia = get_object_or_404(
+        CompetenciaHoraExtra.objects.filter(
+            setor__in=setores_acessiveis
+        ),
+        pk=pk
+    )
+
+    if competencia.status != CompetenciaHoraExtra.Status.ABERTA:
+        messages.error(
+            request,
+            "Somente competências abertas podem ser excluídas."
+        )
+        return redirect(
+            "detalhar_competencia_he",
+            pk=competencia.pk
+        )
+
+    if competencia.lancamentos.exists():
+        messages.error(
+            request,
+            "Não é possível excluir uma competência que já possui lançamentos."
+        )
+        return redirect(
+            "detalhar_competencia_he",
+            pk=competencia.pk
+        )
+
+    if request.method != "POST":
+        return redirect(
+            "detalhar_competencia_he",
+            pk=competencia.pk
+        )
+
+    competencia.delete()
+
+    messages.success(
+        request,
+        "Competência excluída com sucesso."
+    )
+
+    return redirect(
+        "listar_competencias_he"
+    )
+
 
 @login_required
 def detalhar_competencia(request, pk):
 
+    if (
+        not request.user.has_perm(
+            "horas_extras.visualizar_horas_extras"
+        )
+        and not request.user.is_superuser
+    ):
+        messages.error(
+            request,
+            "Você não possui permissão para visualizar horas extras."
+        )
+
+        return redirect(
+            "listar_competencias_he"
+        )
+
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
+    )
+
     competencia = get_object_or_404(
-        CompetenciaHoraExtra.objects.select_related(
+        CompetenciaHoraExtra.objects
+        .filter(
+            setor__in=setores_acessiveis
+        )
+        .select_related(
             "setor",
             "setor__unidade",
             "setor__unidade__empresa",
@@ -156,7 +350,10 @@ def detalhar_competencia(request, pk):
 
     lancamentos = (
         competencia.lancamentos
-        .select_related("funcionario", "criado_por")
+        .select_related(
+            "funcionario",
+            "criado_por"
+        )
         .order_by(
             "data",
             "funcionario__nome"
@@ -168,22 +365,52 @@ def detalhar_competencia(request, pk):
         str(competencia.mes)
     )
 
+    movimentacoes = (
+        competencia.movimentacoes
+        .select_related("usuario")
+        .all()
+    )
+
     return render(
         request,
         "horas_extras/competencias/detalhar.html",
         {
             "competencia": competencia,
             "lancamentos": lancamentos,
+            "movimentacoes": movimentacoes,
         }
     )
     
 @login_required
 def nova_hora_extra(request, pk):
 
+    if (
+        not request.user.has_perm(
+            "horas_extras.lancar_horas_extras"
+        )
+        and not request.user.is_superuser
+    ):
+        messages.error(
+            request,
+            "Você não possui permissão para lançar horas extras."
+        )
+        return redirect(
+            "listar_competencias_he"
+        )
+
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
+    )
+
     competencia = get_object_or_404(
-        CompetenciaHoraExtra.objects.select_related(
+        CompetenciaHoraExtra.objects
+        .filter(
+            setor__in=setores_acessiveis
+        )
+        .select_related(
             "setor",
             "setor__unidade",
+            "setor__unidade__empresa",
         ),
         pk=pk
     )
@@ -194,9 +421,8 @@ def nova_hora_extra(request, pk):
     ]:
         messages.error(
             request,
-            "Os lançamentos desta competência não podem ser alterados."
+            "Não é possível lançar horas extras nesta competência."
         )
-
         return redirect(
             "detalhar_competencia_he",
             pk=competencia.pk
@@ -222,7 +448,7 @@ def nova_hora_extra(request, pk):
 
             messages.success(
                 request,
-                "Hora extra lançada com sucesso."
+                "Hora extra registrada com sucesso."
             )
 
             return redirect(
@@ -242,92 +468,123 @@ def nova_hora_extra(request, pk):
         {
             "form": form,
             "competencia": competencia,
-            "titulo": "Lançar Hora Extra",
+            "titulo": "Nova Hora Extra",
         }
     )
-    
+      
 @login_required
 def funcionarios_competencia(request, pk):
 
-    competencia = get_object_or_404(
-        CompetenciaHoraExtra.objects.select_related(
-            "setor"
-        ),
-        pk=pk
-    )
-
-    data = request.GET.get("data")
-
-    if not data:
-        return JsonResponse(
-            {
-                "funcionarios": []
-            }
-        )
-
-    try:
-        data = date.fromisoformat(data)
-
-    except ValueError:
-        return JsonResponse(
-            {
-                "funcionarios": []
-            },
-            status=400
-        )
-
-    # A data precisa pertencer à competência
+    # O usuário precisa, no mínimo, ter acesso ao módulo.
     if (
-        data.year != competencia.ano
-        or data.month != competencia.mes
+        not request.user.has_perm(
+            "horas_extras.visualizar_horas_extras"
+        )
+        and not request.user.has_perm(
+            "horas_extras.lancar_horas_extras"
+        )
+        and not request.user.is_superuser
     ):
         return JsonResponse(
             {
-                "funcionarios": [],
-                "erro": (
-                    "A data não pertence "
-                    "à competência selecionada."
-                ),
+                "erro": "Você não possui permissão para acessar esta competência."
             },
-            status=400
+            status=403,
         )
 
-    funcionarios = (
-        Funcionario.objects
-        .filter(
-            ativo=True,
-            lotacoes__setor=competencia.setor,
-            lotacoes__inicio__lte=data,
-        )
-        .filter(
-            Q(lotacoes__fim__isnull=True)
-            |
-            Q(lotacoes__fim__gte=data)
-        )
-        .distinct()
-        .order_by("nome")
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
     )
 
-    dados = [
+    # Além da permissão, a competência precisa pertencer
+    # a um setor acessível ao usuário.
+    competencia = get_object_or_404(
+        CompetenciaHoraExtra.objects.select_related(
+            "setor"
+        ).filter(
+            setor__in=setores_acessiveis
+        ),
+        pk=pk,
+    )
+
+    data_str = request.GET.get("data")
+
+    if not data_str:
+        return JsonResponse(
+            {"funcionarios": []}
+        )
+
+    try:
+        data = datetime.strptime(
+            data_str,
+            "%Y-%m-%d"
+        ).date()
+
+    except ValueError:
+        return JsonResponse(
+            {"funcionarios": []},
+            status=400,
+        )
+
+    lotacoes = (
+        LotacaoFuncionario.objects
+        .filter(
+            setor=competencia.setor,
+            inicio__lte=data,
+        )
+        .filter(
+            Q(fim__isnull=True) |
+            Q(fim__gte=data)
+        )
+        .select_related(
+            "funcionario"
+        )
+        .order_by(
+            "funcionario__nome"
+        )
+    )
+
+    funcionarios = [
         {
-            "id": funcionario.pk,
-            "nome": funcionario.nome,
-            "matricula": funcionario.matricula,
+            "id": lotacao.funcionario.id,
+            "nome": lotacao.funcionario.nome,
         }
-        for funcionario in funcionarios
+        for lotacao in lotacoes
     ]
 
     return JsonResponse(
         {
-            "funcionarios": dados
+            "funcionarios": funcionarios
         }
     )
     
 @login_required
 def editar_hora_extra(request, pk):
 
+    if (
+        not request.user.has_perm(
+            "horas_extras.lancar_horas_extras"
+        )
+        and not request.user.is_superuser
+    ):
+        messages.error(
+            request,
+            "Você não possui permissão para editar horas extras."
+        )
+        return redirect(
+            "listar_competencias_he"
+        )
+
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
+    )
+
     hora_extra = get_object_or_404(
-        HoraExtra.objects.select_related(
+        HoraExtra.objects
+        .filter(
+            competencia__setor__in=setores_acessiveis
+        )
+        .select_related(
             "competencia",
             "competencia__setor",
             "competencia__setor__unidade",
@@ -344,9 +601,8 @@ def editar_hora_extra(request, pk):
     ]:
         messages.error(
             request,
-            "Os lançamentos desta competência não podem ser alterados."
+            "Não é possível editar lançamentos nesta competência."
         )
-
         return redirect(
             "detalhar_competencia_he",
             pk=competencia.pk
@@ -366,7 +622,7 @@ def editar_hora_extra(request, pk):
 
             messages.success(
                 request,
-                "Lançamento atualizado com sucesso."
+                "Hora extra atualizada com sucesso."
             )
 
             return redirect(
@@ -387,18 +643,40 @@ def editar_hora_extra(request, pk):
         {
             "form": form,
             "competencia": competencia,
-            "titulo": "Editar Hora Extra",
             "hora_extra": hora_extra,
+            "titulo": "Editar Hora Extra",
         }
     )
     
 @login_required
 def excluir_hora_extra(request, pk):
 
+    if (
+        not request.user.has_perm(
+            "horas_extras.lancar_horas_extras"
+        )
+        and not request.user.is_superuser
+    ):
+        messages.error(
+            request,
+            "Você não possui permissão para excluir horas extras."
+        )
+        return redirect(
+            "listar_competencias_he"
+        )
+
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
+    )
+
     hora_extra = get_object_or_404(
-        HoraExtra.objects.select_related(
+        HoraExtra.objects
+        .filter(
+            competencia__setor__in=setores_acessiveis
+        )
+        .select_related(
             "competencia",
-            "funcionario",
+            "competencia__setor",
         ),
         pk=pk
     )
@@ -411,9 +689,8 @@ def excluir_hora_extra(request, pk):
     ]:
         messages.error(
             request,
-            "Os lançamentos desta competência não podem ser alterados."
+            "Não é possível excluir lançamentos nesta competência."
         )
-
         return redirect(
             "detalhar_competencia_he",
             pk=competencia.pk
@@ -425,12 +702,7 @@ def excluir_hora_extra(request, pk):
 
         messages.success(
             request,
-            "Lançamento excluído com sucesso."
-        )
-
-        return redirect(
-            "detalhar_competencia_he",
-            pk=competencia.pk
+            "Hora extra excluída com sucesso."
         )
 
     return redirect(
@@ -441,8 +713,29 @@ def excluir_hora_extra(request, pk):
 @login_required
 def enviar_competencia_rh(request, pk):
 
+    if (
+        not request.user.has_perm(
+            "horas_extras.enviar_horas_extras_rh"
+        )
+        and not request.user.is_superuser
+    ):
+        messages.error(
+            request,
+            "Você não possui permissão para enviar competências ao RH."
+        )
+        return redirect(
+            "listar_competencias_he"
+        )
+
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
+    )
+
     competencia = get_object_or_404(
-        CompetenciaHoraExtra,
+        CompetenciaHoraExtra.objects
+        .filter(
+            setor__in=setores_acessiveis
+        ),
         pk=pk
     )
 
@@ -458,7 +751,7 @@ def enviar_competencia_rh(request, pk):
     ]:
         messages.error(
             request,
-            "Somente competências abertas podem ser enviadas ao RH."
+            "Somente competências abertas ou devolvidas podem ser enviadas ao RH."
         )
 
         return redirect(
@@ -477,6 +770,8 @@ def enviar_competencia_rh(request, pk):
             pk=competencia.pk
         )
 
+    status_anterior = competencia.status
+
     competencia.status = (
         CompetenciaHoraExtra.Status.ENVIADA_RH
     )
@@ -492,12 +787,11 @@ def enviar_competencia_rh(request, pk):
             "atualizado_em",
         ]
     )
-    
+
     acao = (
         MovimentacaoCompetencia.Acao.REENVIADA
-        if competencia.movimentacoes.filter(
-            acao=MovimentacaoCompetencia.Acao.DEVOLVIDA
-        ).exists()
+        if status_anterior
+        == CompetenciaHoraExtra.Status.DEVOLVIDA
         else MovimentacaoCompetencia.Acao.ENVIADA_RH
     )
 
@@ -520,8 +814,28 @@ def enviar_competencia_rh(request, pk):
 @login_required
 def iniciar_conferencia_competencia(request, pk):
 
+    if (
+        not request.user.has_perm(
+            "horas_extras.conferir_horas_extras"
+        )
+        and not request.user.is_superuser
+    ):
+        messages.error(
+            request,
+            "Você não possui permissão para iniciar a conferência."
+        )
+        return redirect(
+            "listar_competencias_he"
+        )
+
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
+    )
+
     competencia = get_object_or_404(
-        CompetenciaHoraExtra,
+        CompetenciaHoraExtra.objects.filter(
+            setor__in=setores_acessiveis
+        ),
         pk=pk
     )
 
@@ -539,7 +853,6 @@ def iniciar_conferencia_competencia(request, pk):
             request,
             "Esta competência não está aguardando conferência."
         )
-
         return redirect(
             "detalhar_competencia_he",
             pk=competencia.pk
@@ -560,7 +873,7 @@ def iniciar_conferencia_competencia(request, pk):
             "atualizado_em",
         ]
     )
-    
+
     MovimentacaoCompetencia.objects.create(
         competencia=competencia,
         usuario=request.user,
@@ -580,8 +893,28 @@ def iniciar_conferencia_competencia(request, pk):
 @login_required
 def aprovar_competencia(request, pk):
 
+    if (
+        not request.user.has_perm(
+            "horas_extras.aprovar_horas_extras"
+        )
+        and not request.user.is_superuser
+    ):
+        messages.error(
+            request,
+            "Você não possui permissão para aprovar competências."
+        )
+        return redirect(
+            "listar_competencias_he"
+        )
+
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
+    )
+
     competencia = get_object_or_404(
-        CompetenciaHoraExtra,
+        CompetenciaHoraExtra.objects.filter(
+            setor__in=setores_acessiveis
+        ),
         pk=pk
     )
 
@@ -599,7 +932,6 @@ def aprovar_competencia(request, pk):
             request,
             "Somente competências em conferência podem ser aprovadas."
         )
-
         return redirect(
             "detalhar_competencia_he",
             pk=competencia.pk
@@ -620,7 +952,7 @@ def aprovar_competencia(request, pk):
             "atualizado_em",
         ]
     )
-    
+
     MovimentacaoCompetencia.objects.create(
         competencia=competencia,
         usuario=request.user,
@@ -640,8 +972,28 @@ def aprovar_competencia(request, pk):
 @login_required
 def fechar_competencia(request, pk):
 
+    if (
+        not request.user.has_perm(
+            "horas_extras.fechar_horas_extras"
+        )
+        and not request.user.is_superuser
+    ):
+        messages.error(
+            request,
+            "Você não possui permissão para fechar competências."
+        )
+        return redirect(
+            "listar_competencias_he"
+        )
+
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
+    )
+
     competencia = get_object_or_404(
-        CompetenciaHoraExtra,
+        CompetenciaHoraExtra.objects.filter(
+            setor__in=setores_acessiveis
+        ),
         pk=pk
     )
 
@@ -659,7 +1011,6 @@ def fechar_competencia(request, pk):
             request,
             "Somente competências aprovadas podem ser fechadas."
         )
-
         return redirect(
             "detalhar_competencia_he",
             pk=competencia.pk
@@ -680,7 +1031,7 @@ def fechar_competencia(request, pk):
             "atualizado_em",
         ]
     )
-    
+
     MovimentacaoCompetencia.objects.create(
         competencia=competencia,
         usuario=request.user,
@@ -700,18 +1051,38 @@ def fechar_competencia(request, pk):
 @login_required
 def devolver_competencia(request, pk):
 
-    competencia = get_object_or_404(
-        CompetenciaHoraExtra,
-        pk=pk
-    )
-
     if (
-        competencia.status
-        != CompetenciaHoraExtra.Status.EM_CONFERENCIA
+        not request.user.has_perm(
+            "horas_extras.devolver_horas_extras"
+        )
+        and not request.user.is_superuser
     ):
         messages.error(
             request,
-            "Somente competências em conferência podem ser devolvidas."
+            "Você não possui permissão para devolver competências."
+        )
+        return redirect(
+            "listar_competencias_he"
+        )
+
+    setores_acessiveis = setores_acessiveis_por(
+        request.user
+    )
+
+    competencia = get_object_or_404(
+        CompetenciaHoraExtra.objects.filter(
+            setor__in=setores_acessiveis
+        ),
+        pk=pk
+    )
+
+    if competencia.status not in [
+        CompetenciaHoraExtra.Status.EM_CONFERENCIA,
+        CompetenciaHoraExtra.Status.APROVADA,
+    ]:
+        messages.error(
+            request,
+            "Somente competências em conferência ou aprovadas podem ser devolvidas."
         )
 
         return redirect(
@@ -730,12 +1101,10 @@ def devolver_competencia(request, pk):
     )
 
     if not form.is_valid():
-
         messages.error(
             request,
             "Informe o motivo da devolução."
         )
-
         return redirect(
             "detalhar_competencia_he",
             pk=competencia.pk

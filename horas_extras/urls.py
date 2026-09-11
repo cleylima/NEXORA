@@ -66,15 +66,27 @@ urlpatterns = [
     ),
 
     path(
-        "<int:pk>/",
-        views.detalhar_competencia,
-        name="detalhar_competencia_he"
+        "<int:pk>/editar/",
+        views.editar_competencia,
+        name="editar_competencia_he"
+    ),
+
+    path(
+        "<int:pk>/excluir/",
+        views.excluir_competencia,
+        name="excluir_competencia_he"
     ),
     
     path(
         "<int:pk>/devolver/",
         views.devolver_competencia,
         name="devolver_competencia"
+    ),
+
+    path(
+        "<int:pk>/",
+        views.detalhar_competencia,
+        name="detalhar_competencia_he"
     ),
 
 ]

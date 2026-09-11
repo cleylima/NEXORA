@@ -3,7 +3,7 @@ from django.db.models import Q
 
 from cadastros.models import Funcionario
 from .models import HoraExtra
-
+from .permissoes import setores_acessiveis_por
 from .models import CompetenciaHoraExtra
 
 
@@ -59,9 +59,13 @@ class CompetenciaHoraExtraForm(forms.ModelForm):
 
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, usuario=None, **kwargs):
 
         super().__init__(*args, **kwargs)
+
+        self.usuario = usuario
+        
+        self.fields["setor"].empty_label = "Selecione o setor"
 
         self.fields["mes"].widget.attrs.update(
             {
@@ -69,10 +73,24 @@ class CompetenciaHoraExtraForm(forms.ModelForm):
             }
         )
 
+        if usuario is None:
+            self.fields["setor"].queryset = (
+                self.fields["setor"]
+                .queryset
+                .none()
+            )
+
+            return
+
+        setores_acessiveis = setores_acessiveis_por(
+            usuario
+        )
+
         self.fields["setor"].queryset = (
-            self.fields["setor"]
-            .queryset
-            .filter(ativo=True)
+            setores_acessiveis
+            .filter(
+                ativo=True
+            )
             .select_related(
                 "unidade",
                 "unidade__empresa"
