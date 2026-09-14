@@ -263,35 +263,33 @@ class HoraExtra(models.Model):
 
         inicio = datetime.combine(
             self.data,
-            self.hora_inicio
+            self.hora_inicio,
         )
 
         fim = datetime.combine(
             self.data,
-            self.hora_fim
+            self.hora_fim,
         )
 
-        # Se terminar no dia seguinte
         if fim <= inicio:
             fim += timedelta(days=1)
 
         minutos = int(
-            (fim - inicio).total_seconds() / 60
+            (fim - inicio).total_seconds() // 60
         )
 
-        minutos -= self.intervalo_minutos
+        minutos -= self.intervalo_minutos or 0
 
         return max(minutos, 0)
+
 
     @property
     def duracao_horas(self):
 
-        minutos = self.duracao_minutos
+        horas = self.duracao_minutos // 60
+        minutos = self.duracao_minutos % 60
 
-        horas = minutos // 60
-        minutos_restantes = minutos % 60
-
-        return f"{horas:02d}:{minutos_restantes:02d}"
+        return f"{horas:02d}:{minutos:02d}"
 
     def clean(self):
 

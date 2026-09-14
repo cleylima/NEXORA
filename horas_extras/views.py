@@ -1,11 +1,10 @@
 from datetime import date, datetime
 from django.utils import timezone
 from django.http import JsonResponse
-from django.db.models import Q
+from django.db.models import Count, Q
 from cadastros.models import LotacaoFuncionario
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from .forms import CompetenciaHoraExtraForm, HoraExtraForm, DevolverCompetenciaForm
 from .models import (
@@ -36,18 +35,36 @@ MESES = {
 @login_required
 def listar_competencias(request):
 
-    if not request.user.has_perm(
-        "horas_extras.visualizar_horas_extras"
-    ) and not request.user.is_superuser:
+    # =========================================================
+    # PERMISSÃO
+    # =========================================================
+
+    if (
+        not request.user.has_perm(
+            "horas_extras.visualizar_horas_extras"
+        )
+        and not request.user.is_superuser
+    ):
         messages.error(
             request,
             "Você não possui permissão para visualizar horas extras."
         )
+
         return redirect("dashboard")
+
+
+    # =========================================================
+    # SETORES ACESSÍVEIS
+    # =========================================================
 
     setores_acessiveis = setores_acessiveis_por(
         request.user
     )
+
+
+    # =========================================================
+    # QUERY BASE
+    # =========================================================
 
     competencias = (
         CompetenciaHoraExtra.objects
@@ -63,6 +80,165 @@ def listar_competencias(request):
         .annotate(
             total_lancamentos=Count("lancamentos")
         )
+    )
+
+
+    # =========================================================
+    # FILTROS RECEBIDOS PELA URL
+    # =========================================================
+
+    status = request.GET.get("status")
+    setor_id = request.GET.get("setor")
+    ano = request.GET.get("ano")
+    mes = request.GET.get("mes")
+
+
+    if status:
+        competencias = competencias.filter(
+            status=status
+        )
+
+    if setor_id:
+        competencias = competencias.filter(
+            setor_id=setor_id
+        )
+
+    if ano:
+        competencias = competencias.filter(
+            ano=ano
+        )
+
+    if mes:
+        competencias = competencias.filter(
+            mes=mes
+        )
+
+
+    # =========================================================
+    # ORDENAÇÃO
+    # =========================================================
+
+    competencias = competencias.order_by(
+        "-ano",
+        "-mes",
+        "setor__nome",
+    )
+
+
+    # =========================================================
+    # RESUMO POR STATUS
+    # Sempre considera apenas setores acessíveis ao usuário.
+    # =========================================================
+
+    resumo = (
+        CompetenciaHoraExtra.objects
+        .filter(
+            setor__in=setores_acessiveis
+        )
+        .aggregate(
+
+            abertas=Count(
+                "id",
+                filter=Q(
+                    status=CompetenciaHoraExtra.Status.ABERTA
+                )
+            ),
+
+            enviadas_rh=Count(
+                "id",
+                filter=Q(
+                    status=CompetenciaHoraExtra.Status.ENVIADA_RH
+                )
+            ),
+
+            em_conferencia=Count(
+                "id",
+                filter=Q(
+                    status=CompetenciaHoraExtra.Status.EM_CONFERENCIA
+                )
+            ),
+
+            devolvidas=Count(
+                "id",
+                filter=Q(
+                    status=CompetenciaHoraExtra.Status.DEVOLVIDA
+                )
+            ),
+
+            aprovadas=Count(
+                "id",
+                filter=Q(
+                    status=CompetenciaHoraExtra.Status.APROVADA
+                )
+            ),
+
+            fechadas=Count(
+                "id",
+                filter=Q(
+                    status=CompetenciaHoraExtra.Status.FECHADA
+                )
+            ),
+        )
+    )
+    
+    # =========================================================
+    # PENDÊNCIAS DO USUÁRIO
+    # =========================================================
+
+    status_pendentes = []
+
+    # Líder:
+    # competências devolvidas pelo RH precisam de correção.
+    if (
+        request.user.has_perm(
+            "horas_extras.lancar_horas_extras"
+        )
+        or request.user.is_superuser
+    ):
+        status_pendentes.append(
+            CompetenciaHoraExtra.Status.DEVOLVIDA
+        )
+
+
+    # RH:
+    # competências que aguardam alguma ação do fluxo.
+    if (
+        request.user.has_perm(
+            "horas_extras.conferir_horas_extras"
+        )
+        or request.user.is_superuser
+    ):
+        status_pendentes.extend([
+            CompetenciaHoraExtra.Status.ENVIADA_RH,
+            CompetenciaHoraExtra.Status.EM_CONFERENCIA,
+        ])
+
+
+    # Competências aprovadas ainda precisam ser fechadas.
+    if (
+        request.user.has_perm(
+            "horas_extras.fechar_horas_extras"
+        )
+        or request.user.is_superuser
+    ):
+        status_pendentes.append(
+            CompetenciaHoraExtra.Status.APROVADA
+        )
+
+
+    pendencias_usuario = (
+        CompetenciaHoraExtra.objects
+        .filter(
+            setor__in=setores_acessiveis,
+            status__in=status_pendentes,
+        )
+        .select_related(
+            "setor",
+            "setor__unidade",
+        )
+        .annotate(
+            total_lancamentos=Count("lancamentos")
+        )
         .order_by(
             "-ano",
             "-mes",
@@ -70,18 +246,83 @@ def listar_competencias(request):
         )
     )
 
-    for competencia in competencias:
-        competencia.nome_mes = MESES.get(
-            competencia.mes,
-            str(competencia.mes)
+
+    # =========================================================
+    # ANOS DISPONÍVEIS
+    # =========================================================
+
+    anos_disponiveis = (
+        CompetenciaHoraExtra.objects
+        .filter(
+            setor__in=setores_acessiveis
         )
+        .values_list(
+            "ano",
+            flat=True
+        )
+        .distinct()
+        .order_by("-ano")
+    )
+
+
+    # =========================================================
+    # MESES
+    # =========================================================
+
+    meses = [
+        (1, "Janeiro"),
+        (2, "Fevereiro"),
+        (3, "Março"),
+        (4, "Abril"),
+        (5, "Maio"),
+        (6, "Junho"),
+        (7, "Julho"),
+        (8, "Agosto"),
+        (9, "Setembro"),
+        (10, "Outubro"),
+        (11, "Novembro"),
+        (12, "Dezembro"),
+    ]
+
+
+    # =========================================================
+    # NOME DO MÊS NAS PENDÊNCIAS
+    # =========================================================
+
+    nomes_meses = dict(meses)
+
+    for competencia in pendencias_usuario:
+        competencia.nome_mes_exibicao = nomes_meses.get(
+            competencia.mes,
+            ""
+        )
+
+
+    contexto = {
+
+        "competencias": competencias,
+        "setores": setores_acessiveis,
+        "anos_disponiveis": anos_disponiveis,
+        "meses": meses,
+        "status_choices": (
+            CompetenciaHoraExtra.Status.choices
+        ),
+        "resumo": resumo,
+        "pendencias_usuario": pendencias_usuario,
+        "total_pendencias": pendencias_usuario.count(),
+
+        # Mantém os filtros selecionados
+        "filtro_status": status or "",
+        "filtro_setor": setor_id or "",
+        "filtro_ano": ano or "",
+        "filtro_mes": mes or "",
+    }
+
 
     return render(
         request,
         "horas_extras/competencias/listar.html",
-        {
-            "competencias": competencias,
-        }
+        contexto,
     )
 
 
@@ -325,14 +566,15 @@ def detalhar_competencia(request, pk):
             request,
             "Você não possui permissão para visualizar horas extras."
         )
-
         return redirect(
             "listar_competencias_he"
         )
 
+
     setores_acessiveis = setores_acessiveis_por(
         request.user
     )
+
 
     competencia = get_object_or_404(
         CompetenciaHoraExtra.objects
@@ -348,6 +590,7 @@ def detalhar_competencia(request, pk):
         pk=pk
     )
 
+
     lancamentos = (
         competencia.lancamentos
         .select_related(
@@ -360,10 +603,101 @@ def detalhar_competencia(request, pk):
         )
     )
 
+
+    # =========================================================
+    # RESUMO DA COMPETÊNCIA
+    # =========================================================
+
+    total_lancamentos = lancamentos.count()
+
+
+    total_funcionarios = (
+        lancamentos
+        .values("funcionario_id")
+        .distinct()
+        .count()
+    )
+
+
+    total_minutos = sum(
+        lancamento.duracao_minutos
+        for lancamento in lancamentos
+    )
+
+
+    total_horas = total_minutos // 60
+    minutos_restantes = total_minutos % 60
+
+
+    total_horas_formatado = (
+        f"{total_horas:02d}:{minutos_restantes:02d}"
+    )
+
+
+    # =========================================================
+    # RESUMO POR FUNCIONÁRIO
+    # =========================================================
+
+    resumo_por_funcionario = {}
+
+
+    for lancamento in lancamentos:
+
+        funcionario_id = lancamento.funcionario_id
+
+
+        if funcionario_id not in resumo_por_funcionario:
+
+            resumo_por_funcionario[funcionario_id] = {
+                "funcionario": lancamento.funcionario,
+                "lancamentos": 0,
+                "total_minutos": 0,
+            }
+
+
+        resumo_por_funcionario[funcionario_id][
+            "lancamentos"
+        ] += 1
+
+
+        resumo_por_funcionario[funcionario_id][
+            "total_minutos"
+        ] += lancamento.duracao_minutos
+
+
+    # =========================================================
+    # FORMATA TOTAL POR FUNCIONÁRIO
+    # =========================================================
+
+    for item in resumo_por_funcionario.values():
+
+        horas = item["total_minutos"] // 60
+        minutos = item["total_minutos"] % 60
+
+        item["total_horas"] = (
+            f"{horas:02d}:{minutos:02d}"
+        )
+
+
+    resumo_funcionarios = sorted(
+        resumo_por_funcionario.values(),
+        key=lambda item: item["funcionario"].nome.lower()
+    )
+
+
+    # =========================================================
+    # NOME DO MÊS
+    # =========================================================
+
     competencia.nome_mes = MESES.get(
         competencia.mes,
         str(competencia.mes)
     )
+
+
+    # =========================================================
+    # HISTÓRICO
+    # =========================================================
 
     movimentacoes = (
         competencia.movimentacoes
@@ -371,14 +705,33 @@ def detalhar_competencia(request, pk):
         .all()
     )
 
+
+    # =========================================================
+    # CONTEXTO
+    # =========================================================
+
+    contexto = {
+
+        "competencia": competencia,
+
+        "lancamentos": lancamentos,
+
+        "movimentacoes": movimentacoes,
+
+        "resumo_competencia": {
+            "funcionarios": total_funcionarios,
+            "lancamentos": total_lancamentos,
+            "total_horas": total_horas_formatado,
+        },
+
+        "resumo_funcionarios": resumo_funcionarios,
+    }
+
+
     return render(
         request,
         "horas_extras/competencias/detalhar.html",
-        {
-            "competencia": competencia,
-            "lancamentos": lancamentos,
-            "movimentacoes": movimentacoes,
-        }
+        contexto,
     )
     
 @login_required

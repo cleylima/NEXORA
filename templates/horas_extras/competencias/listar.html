@@ -4,15 +4,23 @@
 NEXORA | Horas Extras
 {% endblock %}
 
+
 {% block page_title %}
 Horas Extras
 {% endblock %}
 
+
 {% block page_subtitle %}
-Gerencie competências e lançamentos de horas extras.
+Gestão de competências e lançamentos de horas extras
 {% endblock %}
 
+
 {% block content %}
+
+
+<!-- =========================================================
+     CABEÇALHO
+========================================================= -->
 
 <div class="page-toolbar">
 
@@ -26,31 +34,662 @@ Gerencie competências e lançamentos de horas extras.
 
     </div>
 
-    <a
-        href="{% url 'nova_competencia_he' %}"
-        class="btn-nexora-primary"
-    >
-        <i class="bi bi-plus-lg"></i>
-        Nova Competência
-    </a>
+
+    {% if perms.horas_extras.lancar_horas_extras or request.user.is_superuser %}
+
+        <a
+            href="{% url 'nova_competencia_he' %}"
+            class="btn-nexora-primary"
+        >
+            <i class="bi bi-plus-lg"></i>
+            Nova Competência
+        </a>
+
+    {% endif %}
 
 </div>
 
 
-<div class="nexora-card">
 
-    <div class="table-toolbar">
+<!-- =========================================================
+     RESUMO POR STATUS
+========================================================= -->
+
+<div class="row g-3 mb-4">
+
+
+    <!-- ABERTAS -->
+
+    <div class="col-12 col-sm-6 col-xl-2">
+
+        <a
+            href="{% url 'listar_competencias_he' %}?status=ABERTA"
+            class="text-decoration-none"
+        >
+
+            <div class="nexora-card status-summary-card">
+
+                <div class="status-summary-top">
+
+                    <div class="status-summary-icon status-icon-aberta">
+                        <i class="bi bi-pencil"></i>
+                    </div>
+
+                    <strong class="status-summary-number">
+                        {{ resumo.abertas }}
+                    </strong>
+
+                </div>
+
+                <div class="status-summary-label">
+                    Abertas
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
+
+
+
+    <!-- ENVIADAS AO RH -->
+
+    <div class="col-12 col-sm-6 col-xl-2">
+
+        <a
+            href="{% url 'listar_competencias_he' %}?status=ENVIADA_RH"
+            class="text-decoration-none"
+        >
+
+            <div class="
+                nexora-card
+                status-summary-card
+                {% if resumo.enviadas_rh > 0 %}
+                    {% if perms.horas_extras.conferir_horas_extras or request.user.is_superuser %}
+                        status-needs-attention
+                    {% endif %}
+                {% endif %}
+            ">
+
+                <div class="status-summary-top">
+
+                    <div class="status-summary-icon status-icon-enviada">
+                        <i class="bi bi-send"></i>
+                    </div>
+
+                    <strong class="status-summary-number">
+                        {{ resumo.enviadas_rh }}
+                    </strong>
+
+                </div>
+
+                <div class="status-summary-label">
+                    Aguardando RH
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
+
+
+
+    <!-- EM CONFERÊNCIA -->
+
+    <div class="col-12 col-sm-6 col-xl-2">
+
+        <a
+            href="{% url 'listar_competencias_he' %}?status=EM_CONFERENCIA"
+            class="text-decoration-none"
+        >
+
+            <div class="
+                nexora-card
+                status-summary-card
+                {% if resumo.em_conferencia > 0 %}
+                    {% if perms.horas_extras.conferir_horas_extras or request.user.is_superuser %}
+                        status-needs-attention
+                    {% endif %}
+                {% endif %}
+            ">
+
+                <div class="status-summary-top">
+
+                    <div class="status-summary-icon status-icon-conferencia">
+                        <i class="bi bi-search"></i>
+                    </div>
+
+                    <strong class="status-summary-number">
+                        {{ resumo.em_conferencia }}
+                    </strong>
+
+                </div>
+
+                <div class="status-summary-label">
+                    Em Conferência
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
+
+
+
+    <!-- DEVOLVIDAS -->
+
+    <div class="col-12 col-sm-6 col-xl-2">
+
+        <a
+            href="{% url 'listar_competencias_he' %}?status=DEVOLVIDA"
+            class="text-decoration-none"
+        >
+
+            <div class="
+                nexora-card
+                status-summary-card
+                {% if resumo.devolvidas > 0 %}
+                    {% if perms.horas_extras.lancar_horas_extras or request.user.is_superuser %}
+                        status-needs-attention
+                    {% endif %}
+                {% endif %}
+            ">
+
+                <div class="status-summary-top">
+
+                    <div class="status-summary-icon status-icon-devolvida">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </div>
+
+                    <strong class="status-summary-number">
+                        {{ resumo.devolvidas }}
+                    </strong>
+
+                </div>
+
+                <div class="status-summary-label">
+                    Devolvidas
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
+
+
+
+    <!-- APROVADAS -->
+
+    <div class="col-12 col-sm-6 col-xl-2">
+
+        <a
+            href="{% url 'listar_competencias_he' %}?status=APROVADA"
+            class="text-decoration-none"
+        >
+
+            <div class="
+                nexora-card
+                status-summary-card
+                {% if resumo.aprovadas > 0 %}
+                    {% if perms.horas_extras.fechar_horas_extras or request.user.is_superuser %}
+                        status-needs-attention
+                    {% endif %}
+                {% endif %}
+            ">
+
+                <div class="status-summary-top">
+
+                    <div class="status-summary-icon status-icon-aprovada">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+
+                    <strong class="status-summary-number">
+                        {{ resumo.aprovadas }}
+                    </strong>
+
+                </div>
+
+                <div class="status-summary-label">
+                    Aprovadas
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
+
+
+
+    <!-- FECHADAS -->
+
+    <div class="col-12 col-sm-6 col-xl-2">
+
+        <a
+            href="{% url 'listar_competencias_he' %}?status=FECHADA"
+            class="text-decoration-none"
+        >
+
+            <div class="nexora-card status-summary-card">
+
+                <div class="status-summary-top">
+
+                    <div class="status-summary-icon status-icon-fechada">
+                        <i class="bi bi-lock"></i>
+                    </div>
+
+                    <strong class="status-summary-number">
+                        {{ resumo.fechadas }}
+                    </strong>
+
+                </div>
+
+                <div class="status-summary-label">
+                    Fechadas
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     PENDÊNCIAS DO USUÁRIO
+========================================================= -->
+
+{% if pendencias_usuario %}
+
+    <div class="nexora-card mb-4 pending-card">
+
+        <div class="pending-header">
+
+            <div class="d-flex align-items-center gap-3">
+
+                <div class="pending-header-icon">
+                    <i class="bi bi-exclamation-circle"></i>
+                </div>
+
+                <div>
+
+                    <h5 class="mb-1">
+                        Pendências para você
+                    </h5>
+
+                    <p class="mb-0">
+                        Existem
+                        <strong>{{ total_pendencias }}</strong>
+                        {% if total_pendencias == 1 %}
+                            competência aguardando sua atenção.
+                        {% else %}
+                            competências aguardando sua atenção.
+                        {% endif %}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="pending-list">
+
+            {% for competencia in pendencias_usuario %}
+
+                <a
+                    href="{% url 'detalhar_competencia_he' competencia.pk %}"
+                    class="pending-item"
+                >
+
+                    <div class="pending-item-main">
+
+                        <div class="pending-item-icon">
+
+                            {% if competencia.status == "DEVOLVIDA" %}
+
+                                <i class="bi bi-arrow-counterclockwise"></i>
+
+                            {% elif competencia.status == "ENVIADA_RH" %}
+
+                                <i class="bi bi-inbox"></i>
+
+                            {% elif competencia.status == "EM_CONFERENCIA" %}
+
+                                <i class="bi bi-search"></i>
+
+                            {% elif competencia.status == "APROVADA" %}
+
+                                <i class="bi bi-check-circle"></i>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <div>
+
+                            <strong>
+                                {{ competencia.nome_mes_exibicao }}/{{ competencia.ano }}
+                            </strong>
+
+                            <div class="text-muted small">
+
+                                {{ competencia.setor.nome }}
+
+                                ·
+
+                                {{ competencia.setor.unidade.nome }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="pending-item-action">
+
+                        {% if competencia.status == "DEVOLVIDA" %}
+
+                            <span class="pending-action-label">
+                                Corrigir
+                            </span>
+
+
+                        {% elif competencia.status == "ENVIADA_RH" %}
+
+                            <span class="pending-action-label">
+                                Iniciar conferência
+                            </span>
+
+
+                        {% elif competencia.status == "EM_CONFERENCIA" %}
+
+                            <span class="pending-action-label">
+                                Continuar conferência
+                            </span>
+
+
+                        {% elif competencia.status == "APROVADA" %}
+
+                            <span class="pending-action-label">
+                                Finalizar
+                            </span>
+
+                        {% endif %}
+
+
+                        <i class="bi bi-chevron-right"></i>
+
+                    </div>
+
+                </a>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+{% endif %}
+
+<!-- =========================================================
+     FILTROS
+========================================================= -->
+
+<div class="nexora-card mb-4">
+
+    <div class="form-section-header">
+
+        <div class="form-section-icon">
+            <i class="bi bi-funnel"></i>
+        </div>
 
         <div>
 
-            <h5 class="mb-1">
+            <h5>
+                Filtros
+            </h5>
+
+            <p>
+                Localize rapidamente as competências desejadas
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <form
+        method="get"
+        class="row g-3 align-items-end"
+    >
+
+
+        <!-- STATUS -->
+
+        <div class="col-md-6 col-xl-3">
+
+            <label
+                for="filtroStatus"
+                class="form-label"
+            >
+                Status
+            </label>
+
+            <select
+                name="status"
+                id="filtroStatus"
+                class="form-select"
+            >
+
+                <option value="">
+                    Todos os status
+                </option>
+
+                {% for valor, descricao in status_choices %}
+
+                    <option
+                        value="{{ valor }}"
+                        {% if filtro_status == valor %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ descricao }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+
+        <!-- SETOR -->
+
+        <div class="col-md-6 col-xl-3">
+
+            <label
+                for="filtroSetor"
+                class="form-label"
+            >
+                Setor
+            </label>
+
+            <select
+                name="setor"
+                id="filtroSetor"
+                class="form-select"
+            >
+
+                <option value="">
+                    Todos os setores
+                </option>
+
+                {% for setor in setores %}
+
+                    <option
+                        value="{{ setor.id }}"
+                        {% if filtro_setor == setor.id|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+
+                        {{ setor.nome }}
+
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+
+        <!-- MÊS -->
+
+        <div class="col-md-6 col-xl-2">
+
+            <label
+                for="filtroMes"
+                class="form-label"
+            >
+                Mês
+            </label>
+
+            <select
+                name="mes"
+                id="filtroMes"
+                class="form-select"
+            >
+
+                <option value="">
+                    Todos
+                </option>
+
+                {% for numero, nome in meses %}
+
+                    <option
+                        value="{{ numero }}"
+                        {% if filtro_mes == numero|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ nome }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+
+        <!-- ANO -->
+
+        <div class="col-md-6 col-xl-2">
+
+            <label
+                for="filtroAno"
+                class="form-label"
+            >
+                Ano
+            </label>
+
+            <select
+                name="ano"
+                id="filtroAno"
+                class="form-select"
+            >
+
+                <option value="">
+                    Todos
+                </option>
+
+                {% for ano in anos_disponiveis %}
+
+                    <option
+                        value="{{ ano }}"
+                        {% if filtro_ano == ano|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ ano }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+
+        <!-- BOTÕES -->
+
+        <div class="col-md-12 col-xl-2">
+
+            <div class="d-flex gap-2">
+
+                <button
+                    type="submit"
+                    class="btn-nexora-primary flex-grow-1"
+                >
+                    <i class="bi bi-search"></i>
+                    Filtrar
+                </button>
+
+
+                <a
+                    href="{% url 'listar_competencias_he' %}"
+                    class="btn-nexora-secondary"
+                    title="Limpar filtros"
+                >
+                    <i class="bi bi-x-lg"></i>
+                </a>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+
+<!-- =========================================================
+     LISTAGEM
+========================================================= -->
+
+<div class="nexora-card">
+
+    <div class="form-section-header">
+
+        <div class="form-section-icon">
+            <i class="bi bi-calendar-week"></i>
+        </div>
+
+        <div>
+
+            <h5>
                 Competências
             </h5>
 
-            <span class="table-count">
-                {{ competencias|length }}
-                competência{{ competencias|length|pluralize }}
-            </span>
+            <p>
+                Períodos cadastrados para controle de horas extras
+            </p>
 
         </div>
 
@@ -61,21 +700,40 @@ Gerencie competências e lançamentos de horas extras.
 
         <div class="table-responsive">
 
-            <table class="table nexora-table">
+            <table class="table nexora-table align-middle">
 
                 <thead>
 
                     <tr>
-                        <th>Competência</th>
-                        <th>Setor</th>
-                        <th>Unidade</th>
-                        <th>Status</th>
-                        <th>Lançamentos</th>
-                        <th>Criada por</th>
-                        <th></th>
+
+                        <th>
+                            Competência
+                        </th>
+
+                        <th>
+                            Setor
+                        </th>
+
+                        <th>
+                            Unidade
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th class="text-center">
+                            Lançamentos
+                        </th>
+
+                        <th class="text-end">
+                            Ações
+                        </th>
+
                     </tr>
 
                 </thead>
+
 
                 <tbody>
 
@@ -83,24 +741,28 @@ Gerencie competências e lançamentos de horas extras.
 
                         <tr>
 
+
+                            <!-- COMPETÊNCIA -->
+
                             <td>
 
-                                <div class="entity-cell">
+                                <div class="d-flex align-items-center gap-3">
 
-                                    <div class="entity-icon">
+                                    <div class="competencia-calendar-icon">
+
                                         <i class="bi bi-calendar3"></i>
+
                                     </div>
+
 
                                     <div>
 
-                                        <div class="entity-title">
+                                        <strong>
                                             {{ competencia.nome_mes }}
-                                            /
-                                            {{ competencia.ano }}
-                                        </div>
+                                        </strong>
 
-                                        <div class="entity-subtitle">
-                                            Competência mensal
+                                        <div class="text-muted small">
+                                            {{ competencia.ano }}
                                         </div>
 
                                     </div>
@@ -110,76 +772,100 @@ Gerencie competências e lançamentos de horas extras.
                             </td>
 
 
+
+                            <!-- SETOR -->
+
                             <td>
-                                {{ competencia.setor.nome }}
+
+                                <strong>
+                                    {{ competencia.setor.nome }}
+                                </strong>
+
                             </td>
 
 
+
+                            <!-- UNIDADE -->
+
                             <td>
 
-                                {{ competencia.setor.unidade.nome }}
-
-                                <div class="entity-subtitle">
-                                    {{ competencia.setor.unidade.empresa }}
+                                <div>
+                                    {{ competencia.setor.unidade.nome }}
                                 </div>
 
+                                {% if competencia.setor.unidade.empresa %}
+
+                                    <div class="text-muted small">
+                                        {{ competencia.setor.unidade.empresa.nome }}
+                                    </div>
+
+                                {% endif %}
+
                             </td>
 
+
+
+                            <!-- STATUS -->
 
                             <td>
 
                                 {% if competencia.status == "ABERTA" %}
 
-                                    <span class="status-badge active">
+                                    <span class="workflow-badge workflow-aberta">
+
+                                        <i class="bi bi-pencil"></i>
                                         Aberta
+
                                     </span>
+
+
+                                {% elif competencia.status == "ENVIADA_RH" %}
+
+                                    <span class="workflow-badge workflow-enviada">
+
+                                        <i class="bi bi-send"></i>
+                                        Aguardando RH
+
+                                    </span>
+
+
+                                {% elif competencia.status == "EM_CONFERENCIA" %}
+
+                                    <span class="workflow-badge workflow-conferencia">
+
+                                        <i class="bi bi-search"></i>
+                                        Em Conferência
+
+                                    </span>
+
+
+                                {% elif competencia.status == "DEVOLVIDA" %}
+
+                                    <span class="workflow-badge workflow-devolvida">
+
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                        Devolvida
+
+                                    </span>
+
+
+                                {% elif competencia.status == "APROVADA" %}
+
+                                    <span class="workflow-badge workflow-aprovada">
+
+                                        <i class="bi bi-check-lg"></i>
+                                        Aprovada
+
+                                    </span>
+
 
                                 {% elif competencia.status == "FECHADA" %}
 
-                                    <span class="status-badge inactive">
+                                    <span class="workflow-badge workflow-fechada">
+
+                                        <i class="bi bi-lock"></i>
                                         Fechada
-                                    </span>
 
-                                {% else %}
-
-                                    <span class="status-badge">
-                                       {% if competencia.status == "ABERTA" %}
-
-                                        <span class="workflow-badge workflow-aberta">
-                                            Aberta
-                                        </span>
-
-                                    {% elif competencia.status == "ENVIADA_RH" %}
-
-                                        <span class="workflow-badge workflow-enviada">
-                                            Enviada ao RH
-                                        </span>
-
-                                    {% elif competencia.status == "EM_CONFERENCIA" %}
-
-                                        <span class="workflow-badge workflow-conferencia">
-                                            Em conferência
-                                        </span>
-
-                                    {% elif competencia.status == "DEVOLVIDA" %}
-
-                                        <span class="workflow-badge workflow-devolvida">
-                                            Devolvida
-                                        </span>
-
-                                    {% elif competencia.status == "APROVADA" %}
-
-                                        <span class="workflow-badge workflow-aprovada">
-                                            Aprovada
-                                        </span>
-
-                                    {% elif competencia.status == "FECHADA" %}
-
-                                        <span class="workflow-badge workflow-fechada">
-                                            Fechada
-                                        </span>
-
-                                    {% endif %}
                                     </span>
 
                                 {% endif %}
@@ -187,15 +873,22 @@ Gerencie competências e lançamentos de horas extras.
                             </td>
 
 
-                            <td>
-                                {{ competencia.total_lancamentos }}
+
+                            <!-- LANÇAMENTOS -->
+
+                            <td class="text-center">
+
+                                <span class="lancamentos-count">
+
+                                    {{ competencia.total_lancamentos }}
+
+                                </span>
+
                             </td>
 
 
-                            <td>
-                                {{ competencia.criado_por }}
-                            </td>
 
+                            <!-- AÇÕES -->
 
                             <td class="text-end">
 
@@ -204,7 +897,7 @@ Gerencie competências e lançamentos de horas extras.
                                     class="action-button"
                                     title="Abrir competência"
                                 >
-                                    <i class="bi bi-chevron-right"></i>
+                                    <i class="bi bi-arrow-right"></i>
                                 </a>
 
                             </td>
@@ -219,35 +912,310 @@ Gerencie competências e lançamentos de horas extras.
 
         </div>
 
+
     {% else %}
 
         <div class="empty-state">
 
             <div class="empty-state-icon">
-                <i class="bi bi-calendar2-plus"></i>
+                <i class="bi bi-calendar-x"></i>
             </div>
 
             <h5>
-                Nenhuma competência criada
+                Nenhuma competência encontrada
             </h5>
 
             <p>
-                Crie a primeira competência para iniciar
-                os lançamentos de horas extras.
+                Não existem competências correspondentes aos filtros selecionados.
             </p>
 
-            <a
-                href="{% url 'nova_competencia_he' %}"
-                class="btn-nexora-primary"
-            >
-                <i class="bi bi-plus-lg"></i>
-                Nova Competência
-            </a>
+
+            {% if filtro_status or filtro_setor or filtro_mes or filtro_ano %}
+
+                <a
+                    href="{% url 'listar_competencias_he' %}"
+                    class="btn-nexora-secondary"
+                >
+                    <i class="bi bi-x-lg"></i>
+                    Limpar Filtros
+                </a>
+
+            {% endif %}
 
         </div>
 
     {% endif %}
 
 </div>
+
+
+
+<!-- =========================================================
+     ESTILOS ESPECÍFICOS DA TELA
+========================================================= -->
+
+<style>
+
+    .status-summary-card {
+        padding: 18px;
+        height: 100%;
+        transition:
+            transform .15s ease,
+            box-shadow .15s ease;
+        cursor: pointer;
+    }
+
+    .status-summary-card:hover {
+        transform: translateY(-2px);
+    }
+
+
+    .status-summary-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+    }
+
+
+    .status-summary-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+
+    .status-summary-number {
+        font-size: 27px;
+        line-height: 1;
+        color: var(--bs-body-color);
+    }
+
+
+    .status-summary-label {
+        color: var(--bs-secondary-color);
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+
+    .status-icon-aberta {
+        background: rgba(13, 110, 253, .10);
+        color: #0d6efd;
+    }
+
+
+    .status-icon-enviada {
+        background: rgba(13, 202, 240, .12);
+        color: #087990;
+    }
+
+
+    .status-icon-conferencia {
+        background: rgba(255, 193, 7, .15);
+        color: #997404;
+    }
+
+
+    .status-icon-devolvida {
+        background: rgba(253, 126, 20, .12);
+        color: #b65300;
+    }
+
+
+    .status-icon-aprovada {
+        background: rgba(25, 135, 84, .12);
+        color: #198754;
+    }
+
+
+    .status-icon-fechada {
+        background: rgba(108, 117, 125, .12);
+        color: #6c757d;
+    }
+
+
+    .competencia-calendar-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(13, 110, 253, .08);
+        color: #0d6efd;
+        flex-shrink: 0;
+    }
+
+
+    .lancamentos-count {
+        min-width: 34px;
+        height: 30px;
+        padding: 0 10px;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(108, 117, 125, .10);
+        font-weight: 700;
+    }
+
+    .pending-card {
+        overflow: hidden;
+    }
+
+
+    .pending-header {
+        padding-bottom: 18px;
+        margin-bottom: 6px;
+        border-bottom: 1px solid rgba(108, 117, 125, .15);
+    }
+
+
+    .pending-header-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background: rgba(255, 193, 7, .15);
+        color: #997404;
+
+        font-size: 19px;
+        flex-shrink: 0;
+    }
+
+
+    .pending-header p {
+        color: var(--bs-secondary-color);
+        font-size: 14px;
+    }
+
+
+    .pending-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+
+    .pending-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 20px;
+
+        padding: 15px 4px;
+
+        text-decoration: none;
+        color: inherit;
+
+        border-bottom: 1px solid rgba(108, 117, 125, .10);
+
+        transition:
+            background-color .15s ease,
+            padding .15s ease;
+    }
+
+
+    .pending-item:last-child {
+        border-bottom: 0;
+    }
+
+
+    .pending-item:hover {
+        color: inherit;
+
+        background: rgba(13, 110, 253, .035);
+
+        padding-left: 10px;
+        padding-right: 10px;
+
+        border-radius: 10px;
+    }
+
+
+    .pending-item-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+
+    .pending-item-icon {
+        width: 38px;
+        height: 38px;
+
+        border-radius: 10px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background: rgba(13, 110, 253, .08);
+        color: #0d6efd;
+
+        flex-shrink: 0;
+    }
+
+
+    .pending-item-action {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        color: var(--bs-secondary-color);
+    }
+
+
+    .pending-action-label {
+        font-size: 13px;
+        font-weight: 600;
+    }
+    
+    /* =========================================================
+    CARD QUE EXIGE ATENÇÃO DO USUÁRIO
+    ========================================================= */
+
+    .status-summary-card.status-needs-attention {
+        position: relative;
+        border: 1px solid rgba(245, 158, 11, .45);
+        box-shadow:
+            0 0 0 3px rgba(245, 158, 11, .06),
+            0 6px 18px rgba(15, 23, 42, .06);
+    }
+
+
+    .status-summary-card.status-needs-attention::after {
+        content: "";
+        position: absolute;
+
+        top: 12px;
+        right: 12px;
+
+        width: 7px;
+        height: 7px;
+
+        border-radius: 50%;
+
+        background: #f59e0b;
+    }
+
+
+    .status-summary-card.status-needs-attention
+    .status-summary-label {
+        color: var(--bs-body-color);
+        font-weight: 700;
+    }
+
+</style>
+
 
 {% endblock %}
