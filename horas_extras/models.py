@@ -322,6 +322,73 @@ class HoraExtra(models.Model):
                 "Não é possível alterar uma competência fechada."
             )
             
+class PendenciaHoraExtra(models.Model):
+
+    hora_extra = models.ForeignKey(
+        HoraExtra,
+        on_delete=models.CASCADE,
+        related_name="pendencias",
+        verbose_name="Hora extra"
+    )
+
+    observacao = models.TextField(
+        verbose_name="Observação do RH"
+    )
+
+    criada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="pendencias_horas_extras_criadas",
+        verbose_name="Criada por"
+    )
+
+    criada_em = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Criada em"
+    )
+
+    resolvida = models.BooleanField(
+        default=False,
+        verbose_name="Resolvida"
+    )
+
+    resolvida_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="pendencias_horas_extras_resolvidas",
+        verbose_name="Resolvida por"
+    )
+
+    resolvida_em = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Resolvida em"
+    )
+
+    class Meta:
+        verbose_name = "Pendência de Hora Extra"
+        verbose_name_plural = "Pendências de Horas Extras"
+
+        ordering = [
+            "-criada_em"
+        ]
+
+    def __str__(self):
+
+        status = (
+            "Resolvida"
+            if self.resolvida
+            else "Pendente"
+        )
+
+        return (
+            f"{self.hora_extra.funcionario.nome} - "
+            f"{self.hora_extra.data:%d/%m/%Y} - "
+            f"{status}"
+        )
+            
 class MovimentacaoCompetencia(models.Model):
 
     class Acao(models.TextChoices):
