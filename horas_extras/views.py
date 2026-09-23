@@ -839,8 +839,8 @@ def nova_hora_extra(request, pk):
         ):
             erro_data = (
                 "A data deve pertencer à competência selecionada."
-            )
-            
+            )   
+        
         if (
             not erro_data
             and formset.is_valid()

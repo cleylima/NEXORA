@@ -185,6 +185,8 @@ class HoraExtraForm(forms.ModelForm):
         
         if data_lote:
 
+            self.fields["data"].required = False
+
             self.fields["data"].widget = (
                 forms.HiddenInput()
             )
