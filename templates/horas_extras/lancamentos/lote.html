@@ -1,0 +1,996 @@
+{% extends "base.html" %}
+
+{% block title %}Lançar Horas Extras{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- ======================================================
+         CABEÇALHO
+    ======================================================= -->
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+
+        <div>
+            <div class="text-muted small mb-1">
+                Gestão de Pessoas / Horas Extras
+            </div>
+
+            <h2 class="mb-1">
+                Lançar Horas Extras
+            </h2>
+
+            <div class="text-muted">
+                {{ competencia.setor.nome }}
+                ·
+                {{ competencia.mes|stringformat:"02d" }}/{{ competencia.ano }}
+            </div>
+        </div>
+
+        <a
+            href="{% url 'detalhar_competencia_he' competencia.pk %}"
+            class="btn btn-outline-secondary"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Voltar
+        </a>
+
+    </div>
+
+
+    <!-- ======================================================
+         FORMULÁRIO
+    ======================================================= -->
+
+    <form method="post" id="horaExtraLoteForm">
+
+        {% csrf_token %}
+
+        {{ formset.management_form }}
+
+
+        <!-- ==================================================
+             DATA
+        =================================================== -->
+
+        <div class="card border-0 shadow-sm mb-4">
+
+            <div class="card-body p-4">
+
+                <div class="row align-items-end">
+
+                    <div class="col-lg-4 col-md-6">
+
+                        <label
+                            for="data_lote"
+                            class="form-label fw-semibold"
+                        >
+                            Data das horas extras
+                        </label>
+
+                        <input
+                            type="date"
+                            name="data_lote"
+                            id="data_lote"
+                            class="form-control {% if erro_data %}is-invalid{% endif %}"
+                            value="{{ data_lote }}"
+                            required
+                        >
+
+                        {% if erro_data %}
+                            <div class="invalid-feedback">
+                                {{ erro_data }}
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+                    <div class="col-lg-8 mt-3 mt-lg-0">
+
+                        <div class="text-muted small">
+                            Selecione primeiro a data. Os funcionários
+                            disponíveis serão carregados de acordo com a
+                            lotação do setor naquele dia.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==================================================
+             LANÇAMENTOS
+        =================================================== -->
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-header bg-white border-0 p-4 pb-0">
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                    <div>
+                        <h5 class="mb-1">
+                            Funcionários
+                        </h5>
+
+                        <div class="text-muted small">
+                            Informe os horários de cada funcionário.
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-primary"
+                        id="adicionarFuncionario"
+                    >
+                        <i class="bi bi-plus-lg"></i>
+                        Adicionar funcionário
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="card-body p-4">
+
+                {% if formset.non_form_errors %}
+
+                    <div class="alert alert-danger">
+
+                        {% for erro in formset.non_form_errors %}
+                            <div>{{ erro }}</div>
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <div id="formsetContainer">
+
+                    {% for form in formset %}
+
+                        <div
+                            class="hora-extra-row"
+                            data-form-index="{{ forloop.counter0 }}"
+                        >
+
+                            {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+
+                            <div class="row g-3 align-items-start">
+
+                                <!-- FUNCIONÁRIO -->
+
+                                <div class="col-xl-3 col-lg-4">
+
+                                    <label class="form-label">
+                                        Funcionário
+                                    </label>
+
+                                    {{ form.funcionario }}
+
+                                    {% for erro in form.funcionario.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ erro }}
+                                        </div>
+                                    {% endfor %}
+
+                                </div>
+
+
+                                <!-- INÍCIO -->
+
+                                <div class="col-xl-2 col-lg-2 col-md-4">
+
+                                    <label class="form-label">
+                                        Início
+                                    </label>
+
+                                    {{ form.hora_inicio }}
+
+                                    {% for erro in form.hora_inicio.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ erro }}
+                                        </div>
+                                    {% endfor %}
+
+                                </div>
+
+
+                                <!-- FIM -->
+
+                                <div class="col-xl-2 col-lg-2 col-md-4">
+
+                                    <label class="form-label">
+                                        Fim
+                                    </label>
+
+                                    {{ form.hora_fim }}
+
+                                    {% for erro in form.hora_fim.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ erro }}
+                                        </div>
+                                    {% endfor %}
+
+                                </div>
+
+
+                                <!-- INTERVALO -->
+
+                                <div class="col-xl-2 col-lg-2 col-md-4">
+
+                                    <label class="form-label">
+                                        Intervalo
+                                    </label>
+
+                                    <div class="input-group">
+                                        {{ form.intervalo_minutos }}
+
+                                        <span class="input-group-text">
+                                            min
+                                        </span>
+                                    </div>
+
+                                    {% for erro in form.intervalo_minutos.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ erro }}
+                                        </div>
+                                    {% endfor %}
+
+                                </div>
+
+
+                                <!-- TOTAL -->
+
+                                <div class="col-xl-2 col-lg-2 col-md-6">
+
+                                    <label class="form-label">
+                                        Total
+                                    </label>
+
+                                    <div class="hora-total">
+                                        00:00
+                                    </div>
+
+                                </div>
+
+
+                                <!-- REMOVER -->
+
+                                <div class="col-xl-1 col-md-6">
+
+                                    <label class="form-label d-none d-xl-block">
+                                        &nbsp;
+                                    </label>
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-danger w-100 remover-linha"
+                                        title="Remover funcionário"
+                                    >
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- OBSERVAÇÃO -->
+
+                            <div class="row mt-3">
+
+                                <div class="col-12">
+
+                                    <label class="form-label">
+                                        Observação
+                                        <span class="text-muted fw-normal">
+                                            (opcional)
+                                        </span>
+                                    </label>
+
+                                    {{ form.observacao }}
+
+                                    {% for erro in form.observacao.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ erro }}
+                                        </div>
+                                    {% endfor %}
+
+                                </div>
+
+                            </div>
+
+
+                            {% if form.non_field_errors %}
+
+                                <div class="alert alert-danger mt-3 mb-0">
+
+                                    {% for erro in form.non_field_errors %}
+                                        <div>{{ erro }}</div>
+                                    {% endfor %}
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <div class="d-none">
+                                {{ form.DELETE }}
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- ==================================================
+                     TEMPLATE DA NOVA LINHA
+                =================================================== -->
+
+                <template id="emptyFormTemplate">
+
+                    <div
+                        class="hora-extra-row"
+                        data-form-index="__prefix__"
+                    >
+
+                        {% with form=formset.empty_form %}
+
+                            {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+
+                            <div class="row g-3 align-items-start">
+
+                                <div class="col-xl-3 col-lg-4">
+
+                                    <label class="form-label">
+                                        Funcionário
+                                    </label>
+
+                                    {{ form.funcionario }}
+
+                                </div>
+
+                                <div class="col-xl-2 col-lg-2 col-md-4">
+
+                                    <label class="form-label">
+                                        Início
+                                    </label>
+
+                                    {{ form.hora_inicio }}
+
+                                </div>
+
+                                <div class="col-xl-2 col-lg-2 col-md-4">
+
+                                    <label class="form-label">
+                                        Fim
+                                    </label>
+
+                                    {{ form.hora_fim }}
+
+                                </div>
+
+                                <div class="col-xl-2 col-lg-2 col-md-4">
+
+                                    <label class="form-label">
+                                        Intervalo
+                                    </label>
+
+                                    <div class="input-group">
+
+                                        {{ form.intervalo_minutos }}
+
+                                        <span class="input-group-text">
+                                            min
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-xl-2 col-lg-2 col-md-6">
+
+                                    <label class="form-label">
+                                        Total
+                                    </label>
+
+                                    <div class="hora-total">
+                                        00:00
+                                    </div>
+
+                                </div>
+
+                                <div class="col-xl-1 col-md-6">
+
+                                    <label class="form-label d-none d-xl-block">
+                                        &nbsp;
+                                    </label>
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-danger w-100 remover-linha"
+                                        title="Remover funcionário"
+                                    >
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="row mt-3">
+
+                                <div class="col-12">
+
+                                    <label class="form-label">
+                                        Observação
+                                        <span class="text-muted fw-normal">
+                                            (opcional)
+                                        </span>
+                                    </label>
+
+                                    {{ form.observacao }}
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="d-none">
+                                {{ form.DELETE }}
+                            </div>
+
+                        {% endwith %}
+
+                    </div>
+
+                </template>
+
+
+                <!-- ==================================================
+                     RODAPÉ
+                =================================================== -->
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+
+                    <div class="text-muted small">
+                        <span id="contadorFuncionarios">0</span>
+                        funcionário(s) no lançamento
+                    </div>
+
+                    <div class="d-flex gap-2">
+
+                        <a
+                            href="{% url 'detalhar_competencia_he' competencia.pk %}"
+                            class="btn btn-outline-secondary"
+                        >
+                            Cancelar
+                        </a>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            <i class="bi bi-check-lg"></i>
+                            Salvar lançamentos
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const dataInput = document.getElementById("data_lote");
+        const container = document.getElementById("formsetContainer");
+        const adicionarButton = document.getElementById("adicionarFuncionario");
+
+        const totalForms = document.getElementById(
+            "id_horas-TOTAL_FORMS"
+        );
+
+        const template = document.getElementById(
+            "emptyFormTemplate"
+        );
+
+        const contador = document.getElementById(
+            "contadorFuncionarios"
+        );
+
+        let funcionariosDisponiveis = [];
+
+
+        // =========================================================
+        // FUNCIONÁRIOS DA DATA
+        // =========================================================
+
+        async function carregarFuncionarios() {
+
+            const data = dataInput.value;
+
+            funcionariosDisponiveis = [];
+
+            if (!data) {
+                atualizarSelectsFuncionarios();
+                return;
+            }
+
+            try {
+
+                const url = (
+                    "{% url 'funcionarios_competencia_he' competencia.pk %}"
+                    + "?data="
+                    + encodeURIComponent(data)
+                );
+
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Não foi possível carregar os funcionários."
+                    );
+                }
+
+                const dados = await response.json();
+
+                funcionariosDisponiveis =
+                    dados.funcionarios || [];
+
+                atualizarSelectsFuncionarios();
+
+            } catch (erro) {
+
+                console.error(erro);
+
+                funcionariosDisponiveis = [];
+
+                atualizarSelectsFuncionarios();
+            }
+        }
+
+
+        // =========================================================
+        // ATUALIZA SELECTS
+        // =========================================================
+
+        function atualizarSelectsFuncionarios() {
+
+            const selects = container.querySelectorAll(
+                'select[name$="-funcionario"]'
+            );
+
+            selects.forEach(function (select) {
+
+                const valorAtual = select.value;
+
+                select.innerHTML = "";
+
+                const optionInicial =
+                    document.createElement("option");
+
+                optionInicial.value = "";
+                optionInicial.textContent =
+                    dataInput.value
+                        ? "Selecione o funcionário"
+                        : "Selecione primeiro a data";
+
+                select.appendChild(optionInicial);
+
+
+                funcionariosDisponiveis.forEach(
+                    function (funcionario) {
+
+                        const option =
+                            document.createElement("option");
+
+                        option.value = funcionario.id;
+                        option.textContent = funcionario.nome;
+
+                        if (
+                            String(funcionario.id)
+                            === String(valorAtual)
+                        ) {
+                            option.selected = true;
+                        }
+
+                        select.appendChild(option);
+                    }
+                );
+
+            });
+
+            atualizarFuncionariosSelecionados();
+        }
+
+
+        // =========================================================
+        // EVITA FUNCIONÁRIO REPETIDO
+        // =========================================================
+
+        function atualizarFuncionariosSelecionados() {
+
+            const selects = Array.from(
+                container.querySelectorAll(
+                    'select[name$="-funcionario"]'
+                )
+            );
+
+            const selecionados = selects
+                .map(function (select) {
+                    return select.value;
+                })
+                .filter(Boolean);
+
+
+            selects.forEach(function (select) {
+
+                Array.from(select.options).forEach(
+                    function (option) {
+
+                        if (!option.value) {
+                            return;
+                        }
+
+                        option.disabled = (
+                            selecionados.includes(option.value)
+                            && option.value !== select.value
+                        );
+                    }
+                );
+
+            });
+
+            atualizarContador();
+        }
+
+
+        // =========================================================
+        // NOVA LINHA
+        // =========================================================
+
+        function adicionarLinha() {
+
+            if (!dataInput.value) {
+                dataInput.focus();
+                return;
+            }
+
+            const index = parseInt(
+                totalForms.value,
+                10
+            );
+
+            const html = template.innerHTML.replace(
+                /__prefix__/g,
+                index
+            );
+
+            container.insertAdjacentHTML(
+                "beforeend",
+                html
+            );
+
+            totalForms.value = index + 1;
+
+            atualizarSelectsFuncionarios();
+            configurarLinhas();
+            atualizarContador();
+        }
+
+
+        // =========================================================
+        // REMOVER LINHA
+        // =========================================================
+
+        function removerLinha(linha) {
+
+            const deleteInput = linha.querySelector(
+                'input[name$="-DELETE"]'
+            );
+
+            if (deleteInput) {
+                deleteInput.checked = true;
+            }
+
+            linha.style.display = "none";
+
+            const select = linha.querySelector(
+                'select[name$="-funcionario"]'
+            );
+
+            if (select) {
+                select.value = "";
+            }
+
+            atualizarFuncionariosSelecionados();
+            atualizarContador();
+        }
+
+
+        // =========================================================
+        // CALCULA TOTAL
+        // =========================================================
+
+        function calcularTotal(linha) {
+
+            const inicioInput = linha.querySelector(
+                'input[name$="-hora_inicio"]'
+            );
+
+            const fimInput = linha.querySelector(
+                'input[name$="-hora_fim"]'
+            );
+
+            const intervaloInput = linha.querySelector(
+                'input[name$="-intervalo_minutos"]'
+            );
+
+            const totalElement = linha.querySelector(
+                ".hora-total"
+            );
+
+            if (
+                !inicioInput
+                || !fimInput
+                || !totalElement
+                || !inicioInput.value
+                || !fimInput.value
+            ) {
+                if (totalElement) {
+                    totalElement.textContent = "00:00";
+                }
+
+                return;
+            }
+
+            const [inicioHora, inicioMinuto] =
+                inicioInput.value
+                    .split(":")
+                    .map(Number);
+
+            const [fimHora, fimMinuto] =
+                fimInput.value
+                    .split(":")
+                    .map(Number);
+
+            let inicio =
+                inicioHora * 60 + inicioMinuto;
+
+            let fim =
+                fimHora * 60 + fimMinuto;
+
+            if (fim <= inicio) {
+                fim += 24 * 60;
+            }
+
+            const intervalo = parseInt(
+                intervaloInput?.value || "0",
+                10
+            );
+
+            let total =
+                fim - inicio - intervalo;
+
+            if (total < 0) {
+                total = 0;
+            }
+
+            const horas =
+                Math.floor(total / 60);
+
+            const minutos =
+                total % 60;
+
+            totalElement.textContent =
+                String(horas).padStart(2, "0")
+                + ":"
+                + String(minutos).padStart(2, "0");
+        }
+
+
+        // =========================================================
+        // CONTADOR
+        // =========================================================
+
+        function atualizarContador() {
+
+            const linhas = Array.from(
+                container.querySelectorAll(
+                    ".hora-extra-row"
+                )
+            );
+
+            const total = linhas.filter(
+                function (linha) {
+
+                    if (
+                        linha.style.display
+                        === "none"
+                    ) {
+                        return false;
+                    }
+
+                    const select = linha.querySelector(
+                        'select[name$="-funcionario"]'
+                    );
+
+                    return (
+                        select
+                        && select.value
+                    );
+                }
+            ).length;
+
+            contador.textContent = total;
+        }
+
+
+        // =========================================================
+        // EVENTOS DAS LINHAS
+        // =========================================================
+
+        function configurarLinhas() {
+
+            const linhas = container.querySelectorAll(
+                ".hora-extra-row"
+            );
+
+            linhas.forEach(function (linha) {
+
+                if (linha.dataset.configurada === "1") {
+                    return;
+                }
+
+                linha.dataset.configurada = "1";
+
+
+                const select = linha.querySelector(
+                    'select[name$="-funcionario"]'
+                );
+
+                if (select) {
+
+                    select.addEventListener(
+                        "change",
+                        function () {
+                            atualizarFuncionariosSelecionados();
+                        }
+                    );
+                }
+
+
+                const inicio = linha.querySelector(
+                    'input[name$="-hora_inicio"]'
+                );
+
+                const fim = linha.querySelector(
+                    'input[name$="-hora_fim"]'
+                );
+
+                const intervalo = linha.querySelector(
+                    'input[name$="-intervalo_minutos"]'
+                );
+
+                [inicio, fim, intervalo].forEach(
+                    function (campo) {
+
+                        if (campo) {
+                            campo.addEventListener(
+                                "input",
+                                function () {
+                                    calcularTotal(linha);
+                                }
+                            );
+                        }
+                    }
+                );
+
+
+                const remover = linha.querySelector(
+                    ".remover-linha"
+                );
+
+                if (remover) {
+
+                    remover.addEventListener(
+                        "click",
+                        function () {
+                            removerLinha(linha);
+                        }
+                    );
+                }
+
+
+                calcularTotal(linha);
+            });
+        }
+
+
+        // =========================================================
+        // EVENTOS PRINCIPAIS
+        // =========================================================
+
+        dataInput.addEventListener(
+            "change",
+            carregarFuncionarios
+        );
+
+        adicionarButton.addEventListener(
+            "click",
+            adicionarLinha
+        );
+
+
+        // =========================================================
+        // INICIALIZAÇÃO
+        // =========================================================
+
+        configurarLinhas();
+
+        if (dataInput.value) {
+            carregarFuncionarios();
+        } else {
+            atualizarSelectsFuncionarios();
+        }
+
+        atualizarContador();
+
+    });
+
+</script>
+
+
+<style>
+
+    .hora-extra-row {
+        padding: 22px;
+        margin-bottom: 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fafafa;
+    }
+
+    .hora-extra-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .hora-total {
+        height: 38px;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        border-radius: 6px;
+        background: #eef2f7;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+</style>
+
+{% endblock %}

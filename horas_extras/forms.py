@@ -167,12 +167,14 @@ class HoraExtraForm(forms.ModelForm):
         self,
         *args,
         competencia=None,
+        data_lote=None,
         **kwargs
     ):
 
         super().__init__(*args, **kwargs)
 
         self.competencia = competencia
+        self.data_lote = data_lote
 
         self.fields["funcionario"].queryset = (
             Funcionario.objects.none()
@@ -180,17 +182,29 @@ class HoraExtraForm(forms.ModelForm):
         self.fields["funcionario"].empty_label = (
             "Selecione uma data"
         )
+        
+        if data_lote:
+
+            self.fields["data"].widget = (
+                forms.HiddenInput()
+            )
+
+            self.fields["data"].initial = data_lote
 
         if not competencia:
             return
 
-        data_informada = None
+        data_informada = self.data_lote
 
-        if self.is_bound:
-            data_informada = self.data.get("data")
+        if not data_informada:
 
-        elif self.instance and self.instance.pk:
-            data_informada = self.instance.data
+            if self.is_bound:
+                data_informada = self.data.get(
+                    self.add_prefix("data")
+                )
+
+            elif self.instance and self.instance.pk:
+                data_informada = self.instance.data
 
         if not data_informada:
             return
@@ -234,8 +248,14 @@ class HoraExtraForm(forms.ModelForm):
 
         if not self.competencia:
             return cleaned_data
+        
+        data = (
+            self.data_lote
+            or cleaned_data.get("data")
+        )
 
-        data = cleaned_data.get("data")
+        if self.data_lote:
+            cleaned_data["data"] = self.data_lote
         funcionario = cleaned_data.get("funcionario")
         hora_inicio = cleaned_data.get("hora_inicio")
         hora_fim = cleaned_data.get("hora_fim")
@@ -311,6 +331,54 @@ class HoraExtraForm(forms.ModelForm):
                 )
 
         return cleaned_data
+
+class BaseHoraExtraFormSet(forms.BaseFormSet):
+
+    def clean(self):
+
+        super().clean()
+
+        if any(self.errors):
+            return
+
+        funcionarios_selecionados = set()
+
+        for form in self.forms:
+
+            if not form.cleaned_data:
+                continue
+
+            if form.cleaned_data.get("DELETE"):
+                continue
+
+            funcionario = form.cleaned_data.get(
+                "funcionario"
+            )
+
+            if not funcionario:
+                continue
+
+            if funcionario.pk in funcionarios_selecionados:
+
+                form.add_error(
+                    "funcionario",
+                    (
+                        "Este funcionário já foi "
+                        "adicionado neste lançamento."
+                    )
+                )
+
+            funcionarios_selecionados.add(
+                funcionario.pk
+            )
+
+
+HoraExtraFormSet = forms.formset_factory(
+    HoraExtraForm,
+    formset=BaseHoraExtraFormSet,
+    extra=1,
+    can_delete=True,
+)
     
 class DevolverCompetenciaForm(forms.Form):
 

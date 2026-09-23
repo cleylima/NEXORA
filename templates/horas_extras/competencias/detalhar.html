@@ -392,41 +392,34 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
                     {% for item in resumo_funcionarios %}
 
-                        <tr>
+                        <tr
+                            class="employee-summary-row"
+                            data-funcionario-id="{{ item.funcionario.id }}"
+                        >
 
                             <td>
 
-                                <div class="employee-summary">
-
+                                <button
+                                    type="button"
+                                    class="employee-filter-button"
+                                    data-funcionario-id="{{ item.funcionario.id }}"
+                                >
                                     <div class="employee-summary-avatar">
-
                                         {{ item.funcionario.nome|slice:":1"|upper }}
-
                                     </div>
 
-
-                                    <div>
-
+                                    <div class="text-start">
                                         <strong>
                                             {{ item.funcionario.nome }}
                                         </strong>
 
-
                                         {% if item.funcionario.matricula %}
-
                                             <div class="text-muted small">
-
-                                                Matrícula:
-                                                {{ item.funcionario.matricula }}
-
+                                                Matrícula: {{ item.funcionario.matricula }}
                                             </div>
-
                                         {% endif %}
-
                                     </div>
-
-                                </div>
-
+                                </button>
                             </td>
 
 
@@ -739,7 +732,10 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
                             {% for hora in lancamentos %}
 
-                                <tr>
+                                <tr
+                                    class="launch-row"
+                                    data-funcionario-id="{{ hora.funcionario.id }}"
+                                >
 
                                     <td>
 
@@ -962,6 +958,25 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
                         </tbody>
 
                     </table>
+
+                    <div
+                        id="employeeFilterInfo"
+                        class="employee-filter-info d-none"
+                    >
+                        <span>
+                            Exibindo lançamentos de:
+                            <strong id="employeeFilterName"></strong>
+                        </span>
+
+                        <button
+                            type="button"
+                            id="clearEmployeeFilter"
+                            class="btn-nexora-secondary"
+                        >
+                            <i class="bi bi-x-lg"></i>
+                            Mostrar todos
+                        </button>
+                    </div>
 
                 </div>
 
@@ -1658,6 +1673,138 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
 {% endif %}
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const botoesFuncionarios = document.querySelectorAll(
+        ".employee-filter-button"
+    );
+
+    const linhasLancamentos = document.querySelectorAll(
+        ".launch-row"
+    );
+
+    const linhasResumo = document.querySelectorAll(
+        ".employee-summary-row"
+    );
+
+    const filtroInfo = document.getElementById(
+        "employeeFilterInfo"
+    );
+
+    const filtroNome = document.getElementById(
+        "employeeFilterName"
+    );
+
+    const limparFiltro = document.getElementById(
+        "clearEmployeeFilter"
+    );
+
+
+    botoesFuncionarios.forEach(function (botao) {
+
+        botao.addEventListener("click", function () {
+
+            const funcionarioId =
+                this.dataset.funcionarioId;
+
+            const nome =
+                this.querySelector("strong")
+                    .textContent
+                    .trim();
+
+
+            linhasLancamentos.forEach(function (linha) {
+
+                if (
+                    linha.dataset.funcionarioId ===
+                    funcionarioId
+                ) {
+                    linha.classList.remove(
+                        "is-hidden"
+                    );
+                } else {
+                    linha.classList.add(
+                        "is-hidden"
+                    );
+                }
+
+            });
+
+
+            linhasResumo.forEach(function (linha) {
+
+                if (
+                    linha.dataset.funcionarioId ===
+                    funcionarioId
+                ) {
+                    linha.classList.add(
+                        "is-active"
+                    );
+                } else {
+                    linha.classList.remove(
+                        "is-active"
+                    );
+                }
+
+            });
+
+
+            if (filtroNome) {
+                filtroNome.textContent = nome;
+            }
+
+
+            if (filtroInfo) {
+                filtroInfo.classList.remove(
+                    "d-none"
+                );
+            }
+
+        });
+
+    });
+
+
+    if (limparFiltro) {
+
+        limparFiltro.addEventListener(
+            "click",
+            function () {
+
+                linhasLancamentos.forEach(
+                    function (linha) {
+                        linha.classList.remove(
+                            "is-hidden"
+                        );
+                    }
+                );
+
+
+                linhasResumo.forEach(
+                    function (linha) {
+                        linha.classList.remove(
+                            "is-active"
+                        );
+                    }
+                );
+
+
+                if (filtroInfo) {
+                    filtroInfo.classList.add(
+                        "d-none"
+                    );
+                }
+
+            }
+        );
+
+    }
+
+});
+
+</script>
+
 <style>
     .conference-summary-card {
     display: flex;
@@ -1747,6 +1894,61 @@ NEXORA | {{ competencia.nome_mes }}/{{ competencia.ano }}
 
 .employee-hours-total {
     font-size: 16px;
+}
+
+.employee-filter-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 0;
+    border: 0;
+    background: transparent;
+
+    color: inherit;
+    text-align: left;
+
+    cursor: pointer;
+}
+
+
+.employee-filter-button:hover strong {
+    color: #0d6efd;
+}
+
+
+.employee-summary-row.is-active {
+    background: rgba(13, 110, 253, .045);
+}
+
+
+.launch-row.is-hidden {
+    display: none;
+}
+
+
+.employee-filter-info {
+    margin-top: 16px;
+    padding: 12px 14px;
+
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+
+    background: rgba(13, 110, 253, .05);
+}
+
+
+@media (max-width: 768px) {
+
+    .employee-filter-info {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
 }
 
 </style>

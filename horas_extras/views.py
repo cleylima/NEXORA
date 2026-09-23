@@ -2,11 +2,17 @@ from datetime import date, datetime
 from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Count, Q
+from django.db import transaction
 from cadastros.models import LotacaoFuncionario
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
-from .forms import CompetenciaHoraExtraForm, HoraExtraForm, DevolverCompetenciaForm
+from .forms import (
+    CompetenciaHoraExtraForm,
+    HoraExtraForm,
+    HoraExtraFormSet,
+    DevolverCompetenciaForm,
+)
 from .models import (
     CompetenciaHoraExtra,
     HoraExtra,
@@ -736,7 +742,6 @@ def detalhar_competencia(request, pk):
     
 @login_required
 def nova_hora_extra(request, pk):
-
     if (
         not request.user.has_perm(
             "horas_extras.lancar_horas_extras"
@@ -747,13 +752,16 @@ def nova_hora_extra(request, pk):
             request,
             "Você não possui permissão para lançar horas extras."
         )
+
         return redirect(
             "listar_competencias_he"
         )
 
+
     setores_acessiveis = setores_acessiveis_por(
         request.user
     )
+
 
     competencia = get_object_or_404(
         CompetenciaHoraExtra.objects
@@ -768,6 +776,7 @@ def nova_hora_extra(request, pk):
         pk=pk
     )
 
+
     if competencia.status not in [
         CompetenciaHoraExtra.Status.ABERTA,
         CompetenciaHoraExtra.Status.DEVOLVIDA,
@@ -776,52 +785,140 @@ def nova_hora_extra(request, pk):
             request,
             "Não é possível lançar horas extras nesta competência."
         )
+
         return redirect(
             "detalhar_competencia_he",
             pk=competencia.pk
         )
 
+    data_lote = None
+    data_lote_str = ""
+
     if request.method == "POST":
 
-        form = HoraExtraForm(
+        data_lote_str = request.POST.get(
+            "data_lote",
+            ""
+        ).strip()
+
+        if data_lote_str:
+
+            try:
+                data_lote = datetime.strptime(
+                    data_lote_str,
+                    "%Y-%m-%d"
+                ).date()
+
+            except ValueError:
+                data_lote = None
+
+
+
+    if request.method == "POST":
+
+        formset = HoraExtraFormSet(
             request.POST,
-            competencia=competencia,
+            prefix="horas",
+            form_kwargs={
+                "competencia": competencia,
+                "data_lote": data_lote,
+            }
         )
 
-        if form.is_valid():
 
-            hora_extra = form.save(
-                commit=False
+        erro_data = None
+
+        if not data_lote:
+            erro_data = (
+                "Informe uma data válida para os lançamentos."
             )
 
-            hora_extra.competencia = competencia
-            hora_extra.criado_por = request.user
-
-            hora_extra.save()
-
-            messages.success(
-                request,
-                "Hora extra registrada com sucesso."
+        elif (
+            data_lote.month != competencia.mes
+            or data_lote.year != competencia.ano
+        ):
+            erro_data = (
+                "A data deve pertencer à competência selecionada."
             )
+            
+        if (
+            not erro_data
+            and formset.is_valid()
+        ):
 
-            return redirect(
-                "detalhar_competencia_he",
-                pk=competencia.pk
-            )
+            formularios_validos = [
+                form
+                for form in formset.forms
+                if form.cleaned_data
+                and not form.cleaned_data.get("DELETE")
+                and form.cleaned_data.get("funcionario")
+            ]
+
+            if not formularios_validos:
+
+                messages.error(
+                    request,
+                    "Adicione pelo menos um funcionário."
+                )
+
+            else:
+
+                with transaction.atomic():
+
+                    for form in formularios_validos:
+
+                        hora_extra = form.save(
+                            commit=False
+                        )
+
+                        hora_extra.competencia = competencia
+                        hora_extra.data = data_lote
+                        hora_extra.criado_por = request.user
+
+                        hora_extra.save()
+
+                quantidade = len(
+                    formularios_validos
+                )
+
+                messages.success(
+                    request,
+                    (
+                        f"{quantidade} lançamento"
+                        f"{'s' if quantidade != 1 else ''} "
+                        "de hora extra registrado"
+                        f"{'s' if quantidade != 1 else ''} "
+                        "com sucesso."
+                    )
+                )
+
+                return redirect(
+                    "detalhar_competencia_he",
+                    pk=competencia.pk
+                )
 
     else:
 
-        form = HoraExtraForm(
-            competencia=competencia
+        formset = HoraExtraFormSet(
+            prefix="horas",
+            form_kwargs={
+                "competencia": competencia,
+                "data_lote": None,
+            }
         )
+
+        erro_data = None
+
 
     return render(
         request,
-        "horas_extras/lancamentos/form.html",
+        "horas_extras/lancamentos/lote.html",
         {
-            "form": form,
+            "formset": formset,
             "competencia": competencia,
-            "titulo": "Nova Hora Extra",
+            "titulo": "Lançar Horas Extras",
+            "data_lote": data_lote_str,
+            "erro_data": erro_data,
         }
     )
       
